@@ -4,5 +4,13 @@
   "description": "A music bot for discord.",
   "main": "index.js",
   "author": "PepperKick",
-  "license": "ISC"
+  "license": "ISC",
+  "devDependencies": {
+    "eslint": "4.9.0",
+    "eslint-plugin-import": "2.8.0"
+  },
+  "dependencies": {
+    "config": "1.27.0",
+    "debug": "3.1.0"
+  }
 }

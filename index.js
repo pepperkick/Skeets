@@ -1,12 +1,5 @@
-import config from 'config';
-import debug from 'debug';
-import Discord from 'discord.js';
+const services = require('./services');
 
-const log = debug('Eve');
-const bot = new Discord.Client();
+const app = {};
 
-bot.login(config.get('bot.token'));
-
-bot.on('ready', () => {
-	log('Bot is ready!');
-});
+app.services = services(app);

@@ -1,4 +1,4 @@
-const services = require('./services');
+import services from './services';
 
 const app = {};
 

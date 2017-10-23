@@ -1,4 +1,4 @@
-const discord = require('./discord');
+import discord from './discord';
 
 export default (app) => {
     const modules = [];

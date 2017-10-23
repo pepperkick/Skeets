@@ -10,5 +10,6 @@ bot.on('ready', () => {
 });
 
 export default () => {
+    log(config.get('bot.token'));
     bot.login(config.get('bot.token'));
 };

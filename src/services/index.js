@@ -1,7 +1,15 @@
+import debug from 'debug';
+
 import discord from './discord';
+
+const log = debug('eve:services');
 
 export default (app) => {
     const modules = [];
 
-    modules.push(discord(app));
+    discord(app);
+
+    modules.push();
+
+    log('Services:', modules);
 };

@@ -1,15 +1,26 @@
-const config = require('config');
-const debug = require('debug');
-const Discord = require('discord.js');
+import config from 'config';
+import debug from 'debug';
+import Discord from 'discord.js';
 
 const log = debug('eve:discord');
 const bot = new Discord.Client();
 
-bot.on('ready', () => {
-    log('Service is ready!');
-});
+export default async () => {
+    try {
+        bot.on('ready', () => {
+            log('Service is ready!');
+        });
 
-export default () => {
-    log(config.get('bot.token'));
-    bot.login(config.get('bot.token'));
+        bot.on('message', (message) => {
+            if (message.author.id === bot.user.id) {
+                return;
+            }
+
+            log(message);
+        });
+
+        await bot.login(config.get('bot.token'));
+    } catch (error) {
+        log(error);
+    }
 };

@@ -1,0 +1,96 @@
+{
+	"env": {
+		"es6": true,
+		"node": true
+	},
+	"extends": [
+		"eslint:recommended"
+	],
+	"plugins": [
+		"import"
+	],
+	"parserOptions": {
+		"sourceType": "module"
+	},
+	"rules": {
+		"indent": [
+			"error",
+			4
+		],
+		"linebreak-style": [
+			"error",
+			"unix"
+		],
+		"quotes": [
+			"error",
+			"single"
+		],
+		"semi": [
+			"error",
+			"always"
+		],
+		"import/no-unresolved": [
+			"error"
+		],
+		"import/named": [
+			"error"
+		],
+		"import/default": [
+			"error"
+		],
+		"import/namespace": [
+			"error"
+		],
+		"import/no-restricted-paths": [
+			"error"
+		],
+		"import/no-dynamic-require": [
+			"error"
+		],
+		"import/export": [
+			"error"
+		],
+		"import/no-named-as-default": [
+			"error"
+		],
+		"import/no-named-as-default-member": [
+			"error"
+		],
+		"import/no-deprecated": [
+			"error"
+		],
+		"import/no-extraneous-dependencies": [
+			"error"
+		],
+		"import/no-mutable-exports": [
+			"error"
+		],
+		"import/first": [
+			"error"
+		],
+		"import/exports-last": [
+			"error"
+		],
+		"import/no-duplicates": [
+			"error"
+		],
+		"import/no-namespace": [
+			"error"
+		],
+		"import/extensions": [
+			"error"
+		],
+		"import/order": [
+			"error"
+		],
+		"import/newline-after-import": [
+			"error"
+		],
+		"import/prefer-default-export": [
+			"error"
+		],
+		"import/no-unassigned-import": [
+			"error"
+		]
+	}
+}

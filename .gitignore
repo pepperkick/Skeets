@@ -3,3 +3,5 @@ config
 dist
 
 !config/default.json
+
+nlp-data.json

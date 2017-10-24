@@ -5,6 +5,12 @@ import Discord from 'discord.js';
 const log = debug('eve:service:discord');
 const bot = new Discord.Client();
 
+function filterMessage(message) {
+    const text = message.content;
+
+    return /eve/gi.test(text);
+}
+
 export default async (app) => {
     try {
         bot.on('ready', () => {
@@ -12,7 +18,7 @@ export default async (app) => {
         });
 
         bot.on('message', (message) => {
-            if (message.author.id === bot.user.id) {
+            if (message.author.id === bot.user.id || !filterMessage(message)) {
                 return;
             }
 

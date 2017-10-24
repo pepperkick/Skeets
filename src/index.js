@@ -6,9 +6,8 @@ const log = debug('eve:services');
 const app = {};
 
 const init = async () => {
-    app.services = await services(app);
-
     app.service = service => app.services[service];
+    app.services = await services(app);
 };
 
 process.on('uncaughtException', (err) => {

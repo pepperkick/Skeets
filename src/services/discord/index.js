@@ -5,7 +5,7 @@ import Discord from 'discord.js';
 const log = debug('eve:service:discord');
 const bot = new Discord.Client();
 
-export default async () => {
+export default async (app) => {
     try {
         bot.on('ready', () => {
             log('Service is ready!');
@@ -16,7 +16,7 @@ export default async () => {
                 return;
             }
 
-            log(message);
+            app.service('messages').handle(message);
         });
 
         await bot.login(config.get('bot.token'));

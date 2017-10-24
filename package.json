@@ -12,6 +12,7 @@
     "config": "1.27.0",
     "debug": "3.1.0",
     "discord.js": "11.2.1",
+    "natural": "0.5.4",
     "node-opus": "0.2.7"
   },
   "devDependencies": {

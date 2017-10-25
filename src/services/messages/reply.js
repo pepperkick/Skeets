@@ -1,13 +1,20 @@
 const reply = {
     'chat.greet': [
-        'Hello there!',
-        'Hi!',
+        'Hello there <name>!',
+        'Hi <name>!',
     ],
 };
 
-export default (action) => {
-    const replies = reply[action];
-    const index = new Date().getTime() % replies.length;
+export default () => {
+    return {
+        getReply: (action) => {
+            const replies = reply[action];
+            const index = new Date().getTime() % replies.length;
 
-    return replies[index];
+            return replies[index];
+        },
+        processReply: {
+            name: (text, name) => text.replace('<name>', name)
+        }
+    };
 };

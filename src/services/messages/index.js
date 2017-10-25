@@ -25,39 +25,70 @@ export default (app) => {
     const handleMessage = async (action, message) => {
         const text = handleReply.getReply(action);
         const reply = handleReply.processReply.name(text, message.author.username);
+        const session = message.author.id;
+        const guild = message.guild.id;
 
-        const sentMsg = await sendMessage(reply, message);
+        const sentMsg = await sendMessage(reply, message, true);
 
-        processToBank(message.author.id, message);
-        processToBank(message.author.id, sentMsg);
+        processToBank(guild, session, message);
+        processToBank(guild, session, sentMsg);
+
+        checkIfGroupable(guild, session);
     };
 
-    const sendMessage = (reply, message) => message.channel.send(reply);
+    const sendMessage = (reply, message, embed, options={}) => message.channel.send(embed ? '' : reply, embed ? {
+        embed: {
+            color: handleReply.replyColor.normal.green,
+            description: reply,
+            timestamp: new Date(),
+            footer: {
+                icon_url: config.get('bot.avatar'),
+                text: config.get('bot.name')
+            }
+        }
+    } : options);
 
-    const processToBank = (id, message) => {
-        if (!msgBank[id])
-            msgBank[id] = [];
+    const processToBank = (guild, session, message) => {
+        if (!msgBank[guild])
+            msgBank[guild] = [];
 
-        msgBank[id].push(message);
+        if (!msgBank[guild][session])
+            msgBank[guild][session] = [];
 
-        checkIfGroupable(id);
+        msgBank[guild][session].push(message);
     };
 
-    const checkIfGroupable = async (id) => {
-        const msgs = msgBank[id];
+    const checkIfGroupable = async (guild, session) => {
+        if (!config.get('message.autoGroupMessages')) return;
 
-        if (msgs.length > 5) {
+        const msgs = msgBank[guild][session];
+
+        if (msgs.length > config.get('message.groupMessages')) {
             let text = '';
 
             for (var i = 0; i < msgs.length; i++) {
-                text += `**${msgs[i].author.username}**: ${msgs[i].content}\n`;
+                if (msgs[i].content === '')
+                    text += `**${msgs[i].author.username}**: ${msgs[i].embeds[0].description}\n`;
+                else
+                    text += `**${msgs[i].author.username}**: ${msgs[i].content}\n`;
                 msgs[i].delete();
             }
 
-            const reply = await sendMessage(text, msgs[0]);
+            const reply = await sendMessage('', msgs[0], false, {
+                embed: {
+                    color: handleReply.replyColor.normal.purple,
+                    title: 'Conversation',
+                    description: text,
+                    timestamp: new Date(),
+                    footer: {
+                        icon_url: config.get('bot.avatar'),
+                        text: config.get('bot.name')
+                    }
+                }
+            });
 
-            msgBank[id] = [];
-            msgBank[id].push(reply);
+            msgBank[guild][session] = [];
+            msgBank[guild][session].push(reply);
         }
     };
 
@@ -66,8 +97,14 @@ export default (app) => {
             const natural = app.service('natural');
             const text = message.content;
             const result = natural.classify(text);
-            const nlpValue = result[0].value;
-            const nlpAction = result[0].label;
+
+            let nlpValue = 0;
+            let nlpAction = 'unknwon';
+
+            if (result.length !== 0) {
+                nlpValue = result[0].value;
+                nlpAction = result[0].label;
+            }
 
             if (nlpValue >= config.get('classifier.localThreshold')) {
                 log('Detected action', nlpAction);
@@ -91,6 +128,7 @@ export default (app) => {
                 log('Unable to detect action locally, sending request to dialogflow');
                 requestDialogFlow(message.author.id, text, dfCb);
             }
-        }
+        },
+        replyHandler: handleReply
     };
 };

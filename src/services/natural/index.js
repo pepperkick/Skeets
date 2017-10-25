@@ -9,7 +9,11 @@ let classifer;
 natural.BayesClassifier.load(config.get('classifier.path'), null, (error, _classifier) => {
     classifer = _classifier;
 
-    if (error) {
+    if (error && error.code === 'ENOENT') {
+        log('Unable to load classifier file, creating new classifier');
+
+        classifer = new natural.BayesClassifier();
+    } else if(error) {
         throw new Error('Unable to load classifier file', error);
     }
 

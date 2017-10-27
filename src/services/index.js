@@ -7,7 +7,12 @@ const actionRegistry = {};
 
 export default async (app) => {
     app.registerAction = (action, func) => actionRegistry[action] = func;
-    app.callAction = (action, data) => actionRegistry[action](data);
+    app.callAction = (action, data) => {
+        if (actionRegistry[action])
+            actionRegistry[action](data);
+        else
+            throw new Error(`Unknown action ${action}`);
+    };
 
     return {
         discord: await discord(app),

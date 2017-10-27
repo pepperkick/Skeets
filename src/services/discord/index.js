@@ -26,6 +26,8 @@ export default async (app) => {
         });
 
         await bot.login(config.get('service.discord.token'));
+
+        return bot;
     } catch (error) {
         log(error);
     }

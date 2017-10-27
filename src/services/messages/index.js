@@ -8,6 +8,18 @@ const handleReply = replyHandler();
 const msgBank = {};
 
 export default (app) => {
+    app.registerAction('chat.greet', async data => {
+        const message = data.message;
+        const user = message.author.username;
+        const session = message.author.id;
+        const guild = message.guild.id;
+        const text = handleReply.getReply('chat.greet');
+        const reply = handleReply.processReply.name(text, user);
+
+        const msg = await sendMessage(reply, message, true);
+        processToBank(guild, session, msg);
+    });
+
     const requestDialogFlow = (session, text, callback) => {
         const request = app.service('dialogflow').classify(session, text);
 
@@ -22,31 +34,33 @@ export default (app) => {
         request.end();
     };
 
-    const handleMessage = async (action, message) => {
-        const text = handleReply.getReply(action);
-        const reply = handleReply.processReply.name(text, message.author.username);
+    const handleMessage = (action, message) => {
         const session = message.author.id;
         const guild = message.guild.id;
 
-        const sentMsg = await sendMessage(reply, message, true);
+        app.callAction(action, { message });
 
         processToBank(guild, session, message);
-        processToBank(guild, session, sentMsg);
-
         checkIfGroupable(guild, session);
     };
 
-    const sendMessage = (reply, message, embed, options={}) => message.channel.send(embed ? '' : reply, embed ? {
-        embed: {
-            color: handleReply.replyColor.normal.green,
-            description: reply,
-            timestamp: new Date(),
-            footer: {
-                icon_url: config.get('bot.avatar'),
-                text: config.get('bot.name')
-            }
+    const sendMessage = async (text, message, embed, options={}) => {
+        if (embed) {
+            return message.channel.send('', {
+                embed: {
+                    color: handleReply.replyColor.normal.green,
+                    description: text,
+                    timestamp: new Date(),
+                    footer: {
+                        icon_url: config.get('bot.avatar'),
+                        text: config.get('bot.name')
+                    }
+                }
+            });
+        } else {
+            return await message.channel.send(text, options);
         }
-    } : options);
+    };
 
     const processToBank = (guild, session, message) => {
         if (!msgBank[guild])
@@ -65,6 +79,7 @@ export default (app) => {
 
         if (msgs.length > config.get('message.groupMessages')) {
             let text = '';
+            if (!msgs[0]) throw new Error('Unable to group messages');
 
             for (var i = 0; i < msgs.length; i++) {
                 if (msgs[i].content === '')
@@ -129,6 +144,7 @@ export default (app) => {
                 requestDialogFlow(message.author.id, text, dfCb);
             }
         },
-        replyHandler: handleReply
+        sendMessage,
+        replyHandler
     };
 };

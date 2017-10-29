@@ -1,7 +1,23 @@
 import discord from './discord';
+import messages from './messages';
+import natural from './natural';
+import dialogflow from './dialogflow';
+
+const actionRegistry = {};
 
 export default async (app) => {
+    app.registerAction = (action, func) => actionRegistry[action] = func;
+    app.callAction = (action, data) => {
+        if (actionRegistry[action])
+            actionRegistry[action](data);
+        else
+            throw new Error(`Unknown action ${action}`);
+    };
+
     return {
-        discord: await discord(app)
+        discord: await discord(app),
+        messages: await messages(app),
+        natural: await natural(app),
+        dialogflow: await dialogflow(app),
     };
 };

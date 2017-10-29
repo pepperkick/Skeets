@@ -2,24 +2,32 @@ import config from 'config';
 import debug from 'debug';
 import Discord from 'discord.js';
 
-const log = debug('eve:discord');
+const log = debug('eve:service:discord');
 const bot = new Discord.Client();
 
-export default async () => {
+function filterMessage(message) {
+    const text = message.content;
+
+    return /\beve\b/gi.test(text);
+}
+
+export default async (app) => {
     try {
         bot.on('ready', () => {
             log('Service is ready!');
         });
 
         bot.on('message', (message) => {
-            if (message.author.id === bot.user.id) {
+            if (message.author.id === bot.user.id || !filterMessage(message)) {
                 return;
             }
 
-            log(message);
+            app.service('messages').handle(message);
         });
 
-        await bot.login(config.get('bot.token'));
+        await bot.login(config.get('service.discord.token'));
+
+        return bot;
     } catch (error) {
         log(error);
     }

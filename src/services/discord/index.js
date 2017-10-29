@@ -8,7 +8,7 @@ const bot = new Discord.Client();
 function filterMessage(message) {
     const text = message.content;
 
-    return /eve/gi.test(text);
+    return /\beve\b/gi.test(text);
 }
 
 export default async (app) => {

@@ -41,7 +41,6 @@ export default (app) => {
         app.callAction(action, { message });
 
         processToBank(guild, session, message);
-        checkIfGroupable(guild, session);
     };
 
     const sendMessage = async (text, message, embed, options={}) => {
@@ -72,77 +71,66 @@ export default (app) => {
         msgBank[guild][session].push(message);
     };
 
-    const checkIfGroupable = async (guild, session) => {
-        if (!config.get('message.autoGroupMessages')) return;
+    const checkIfGroupable = async () => {
+        if (!config.get('message.autoGroupMessages')) return; 
 
-        const msgs = msgBank[guild][session];
+        for (const guild in msgBank) {
+            for (const session in msgBank[guild]) {
+                const msgs = msgBank[guild][session];
 
-        if (msgs.length > config.get('message.groupMessages')) {
-            let text = '';
-            if (!msgs[0]) throw new Error('Unable to group messages');
+                if (msgs.length > config.get('message.groupMessages')) {
+                    let text = '';
+                    if (!msgs[0]) throw new Error('Unable to group messages');
 
-            for (var i = 0; i < msgs.length; i++) {
-                if (msgs[i].content === '')
-                    text += `**${msgs[i].author.username}**: ${msgs[i].embeds[0].description}\n`;
-                else
-                    text += `**${msgs[i].author.username}**: ${msgs[i].content}\n`;
-                msgs[i].delete();
-            }
-
-            const reply = await sendMessage('', msgs[0], false, {
-                embed: {
-                    color: handleReply.replyColor.normal.purple,
-                    title: 'Conversation',
-                    description: text,
-                    timestamp: new Date(),
-                    footer: {
-                        icon_url: config.get('bot.avatar'),
-                        text: config.get('bot.name')
+                    for (var i = 0; i < msgs.length; i++) {
+                        if (msgs[i].content === '')
+                            text += `**${msgs[i].author.username}**: ${msgs[i].embeds[0].description}\n`;
+                        else
+                            text += `**${msgs[i].author.username}**: ${msgs[i].content}\n`;
+                        msgs[i].delete();
                     }
-                }
-            });
 
-            msgBank[guild][session] = [];
-            msgBank[guild][session].push(reply);
+                    const reply = await sendMessage('', msgs[0], false, {
+                        embed: {
+                            color: handleReply.replyColor.normal.purple,
+                            title: 'Conversation',
+                            description: text,
+                            timestamp: new Date(),
+                            footer: {
+                                icon_url: config.get('bot.avatar'),
+                                text: config.get('bot.name')
+                            }
+                        }
+                    });
+
+                    msgBank[guild][session] = [];
+                }
+            }
         }
     };
 
+    setInterval(() => {
+        checkIfGroupable();
+    }, 30 * 1000);
+
     return {
         handle: message => {
-            const natural = app.service('natural');
             const text = message.content;
-            const result = natural.classify(text);
 
-            let nlpValue = 0;
-            let nlpAction = 'unknwon';
+            const dfCb = (response) => {
+                const dfValue = response.result.score;
+                const dfAction = response.result.action;
 
-            if (result.length !== 0) {
-                nlpValue = result[0].value;
-                nlpAction = result[0].label;
-            }
+                if (dfValue >= config.get('service.dialogflow.threshold')) {
+                    log(`Detected remote action ${dfAction}`);
 
-            if (nlpValue >= config.get('classifier.localThreshold')) {
-                log('Detected action', nlpAction);
+                    handleMessage(dfAction, message);
+                } else {
+                    log('Unable to detect action remotely, falback to default action');
+                }
+            };
 
-                handleMessage(nlpAction, message);
-            } else {
-                const dfCb = (response) => {
-                    const dfValue = response.result.score;
-                    const dfAction = response.result.action;
-
-                    if (dfValue >= config.get('classifier.remoteThreshold')) {
-                        log(`Detected remote action ${dfAction}, teaching local nlp`);
-
-                        natural.train(text, dfAction);
-                        handleMessage(dfAction, message);
-                    } else {
-                        log('Unable to detect action remotely, falback to default action');
-                    }
-                };
-
-                log('Unable to detect action locally, sending request to dialogflow');
-                requestDialogFlow(message.author.id, text, dfCb);
-            }
+            requestDialogFlow(message.author.id, text, dfCb);
         },
         sendMessage,
         replyHandler

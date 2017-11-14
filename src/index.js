@@ -14,6 +14,7 @@ const init = async () => {
 process.on('uncaughtException', (error) => {
     log(error);
     SendErrorMesage('Fatal Exception', error);
+    Shutdown('Fatal Exception');
 });
 
 process.on('unhandledRejection', (reason) => {
@@ -24,20 +25,28 @@ process.on('unhandledRejection', (reason) => {
 async function SendErrorMesage(type, error) {
     const discord = app.service('discord');
 
-    await discord.channels.get(config.get('bot.channel')).send('', {
-        embed: {
-            color: parseInt('F44336', 16),
-            title: 'Something seriously went wrong!',
-            description: `${type}: ${JSON.stringify(error)}`,
-            timestamp: new Date(),
-            footer: {
-                icon_url: config.get('bot.avatar'),
-                text: config.get('bot.name')
+    try {
+        await discord.channels.get(config.get('bot.channel')).send('', {
+            embed: {
+                color: parseInt('F44336', 16),
+                title: 'Something seriously went wrong!',
+                description: `${type}: ${JSON.stringify(error)}`,
+                timestamp: new Date(),
+                footer: {
+                    icon_url: config.get('bot.avatar'),
+                    text: config.get('bot.name')
+                }
             }
-        }
-    });
+        });
+    } catch (error) {
+        Shutdown('Discord Exception');
+    }
+}
 
-    process.exit(0);
+function Shutdown(info) {
+    log('Shutdown due to', info);
+
+    process.exit();
 }
 
 init();

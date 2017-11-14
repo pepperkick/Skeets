@@ -12,9 +12,24 @@ function filterMessage(message) {
 }
 
 export default async (app) => {
-    try {
+    const handleVoiceConnections = () => {
+        setTimeout(() => {
+            log('Connecting to voice channels');
+
+            const voice = app.service('discordVoice');
+            const guilds = config.get('guilds');
+
+            for(const id in guilds) {
+                voice.joinChannel(guilds[id].voice);
+            }
+        }, 5 * 1000);
+    };
+
+    const attachHandlers = () => {
         bot.on('ready', () => {
             log('Service is ready!');
+
+            handleVoiceConnections();
         });
 
         bot.on('message', (message) => {
@@ -24,11 +39,16 @@ export default async (app) => {
 
             app.service('messages').handle(message);
         });
+    };
 
-        await bot.login(config.get('service.discord.token'));
+    const connectDiscord = async () => await bot.login(config.get('service.discord.token'));
 
+    try {
+        await attachHandlers();
+        await connectDiscord();
         return bot;
     } catch (error) {
         log(error);
+        throw new Error('Discord connection error!');
     }
 };

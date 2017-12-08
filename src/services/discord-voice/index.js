@@ -4,13 +4,37 @@ const log = debug('eve:service:discord-voice');
 
 const connectionBank = {};
 
+const replies = {
+    notInVoiceChannel: [
+        'You are not in a voice channel!',
+        'I cannot find you in any voice channel!',
+        'Please join a voice channel first!',
+    ]
+};
+
+function getErrorReply(tag) {
+    const length = replies[tag].length;
+    const random = Math.floor(Math.random() * length);
+
+    log(`Reply: ${tag} ${length} ${random} ${replies[tag][random]}`);
+
+    return replies[tag][random];
+}
+
 export default async (app) => {
     app.registerCommand('join', (data) => {
-        const author = data.message.author;
-        const member = data.messag.member;
+        const member = data.message.member;
 
         if (!member.voiceChannel) {
-            app.service('message').sendMessage();
+            app.service('messages').sendErrorMessage(getErrorReply('notInVoiceChannel'), data.message);
+        }
+    });
+
+    app.registerAction('bot.join', (data) => {
+        const member = data.message.member;
+
+        if (!member.voiceChannel) {
+            app.service('messages').sendErrorMessage(getErrorReply('notInVoiceChannel'), data.message);
         }
     });
 

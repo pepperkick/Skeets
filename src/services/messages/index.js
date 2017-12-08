@@ -45,9 +45,9 @@ export default (app) => {
 
     const sendMessage = async (text, message, embed, options={}) => {
         if (embed) {
-            return message.channel.send('', {
+            return await message.channel.send('', {
                 embed: {
-                    color: handleReply.replyColor.normal.green,
+                    color: handleReply.replyColor.normal.cyan,
                     description: text,
                     timestamp: new Date(),
                     footer: {
@@ -61,6 +61,20 @@ export default (app) => {
         }
     };
 
+    const sendErrorMessage = async (text, message) => {
+        return await message.channel.send('', {
+            embed: {
+                color: handleReply.replyColor.normal.amber,
+                description: text,
+                timestamp: new Date(),
+                footer: {
+                    icon_url: config.get('bot.avatar'),
+                    text: config.get('bot.name')
+                }
+            }
+        });
+    };
+
     const processToBank = (guild, session, message) => {
         if (!msgBank[guild])
             msgBank[guild] = [];
@@ -72,7 +86,7 @@ export default (app) => {
     };
 
     const checkIfGroupable = async () => {
-        if (!config.get('message.autoGroupMessages')) return; 
+        if (!config.get('message.autoGroupMessages')) return;
 
         for (const guild in msgBank) {
             for (const session in msgBank[guild]) {
@@ -90,7 +104,7 @@ export default (app) => {
                         msgs[i].delete();
                     }
 
-                    const reply = await sendMessage('', msgs[0], false, {
+                    await sendMessage('', msgs[0], false, {
                         embed: {
                             color: handleReply.replyColor.normal.purple,
                             title: 'Conversation',
@@ -133,6 +147,7 @@ export default (app) => {
             requestDialogFlow(message.author.id, text, dfCb);
         },
         sendMessage,
+        sendErrorMessage,
         replyHandler
     };
 };

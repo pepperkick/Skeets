@@ -2,6 +2,7 @@ import debug from 'debug';
 
 import discord from './discord';
 import discordVoice from './discord-voice';
+import reply from './reply';
 import messages from './messages';
 import dialogflow from './dialogflow';
 
@@ -38,6 +39,7 @@ export default async (app) => {
     return {
         discordVoice: await discordVoice(app),
         discord: await discord(app),
+        reply: await reply(app),
         messages: await messages(app),
         dialogflow: await dialogflow(app),
     };

@@ -1,0 +1,14 @@
+{
+    "chat.greet": [
+        "Hello there **<name>**!",
+        "Hi **<name>**!"
+    ],
+    "voice.error.notInVoiceChannel": [
+        "You are not in a voice channel!",
+        "I cannot find you in any voice channel!",
+        "Please join a voice channel first!"
+    ],
+    "voice.info.connected": [
+        "Joined you!"
+    ]
+}

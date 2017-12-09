@@ -13,14 +13,16 @@ function filterMessage(message) {
 
 export default async (app) => {
     const handleVoiceConnections = () => {
-        setTimeout(() => {
+        setTimeout(async () => {
             log('Connecting to voice channels');
 
             const voice = app.service('discordVoice');
             const guilds = config.get('guilds');
 
             for(const id in guilds) {
-                voice.joinChannel(guilds[id].voice);
+                const channel = await bot.channels.get(guilds[id].voice);
+
+                voice.joinChannel(channel);
             }
         }, 5 * 1000);
     };

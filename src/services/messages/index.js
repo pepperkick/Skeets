@@ -1,10 +1,7 @@
 import config from 'config';
 import debug from 'debug';
 
-import replyHandler from './reply';
-
 const log = debug('eve:service:messages');
-const handleReply = replyHandler();
 const msgBank = {};
 
 export default (app) => {
@@ -13,8 +10,8 @@ export default (app) => {
         const user = message.author.username;
         const session = message.author.id;
         const guild = message.guild.id;
-        const text = handleReply.getReply('chat.greet');
-        const reply = handleReply.processReply.name(text, user);
+        const text = app.service('reply').getReply('chat.greet');
+        const reply = app.service('reply').processReply.name(text, user);
 
         const msg = await sendMessage(reply, message, true);
         processToBank(guild, session, msg);
@@ -47,7 +44,7 @@ export default (app) => {
         if (embed) {
             return await message.channel.send('', {
                 embed: {
-                    color: handleReply.replyColor.normal.cyan,
+                    color: app.service('reply').replyColor.normal.cyan,
                     description: text,
                     timestamp: new Date(),
                     footer: {
@@ -61,10 +58,24 @@ export default (app) => {
         }
     };
 
+    const sendInfoMessage = async (text, message) => {
+        return await message.channel.send('', {
+            embed: {
+                color: app.service('reply').replyColor.normal.green,
+                description: text,
+                timestamp: new Date(),
+                footer: {
+                    icon_url: config.get('bot.avatar'),
+                    text: config.get('bot.name')
+                }
+            }
+        });
+    };
+
     const sendErrorMessage = async (text, message) => {
         return await message.channel.send('', {
             embed: {
-                color: handleReply.replyColor.normal.amber,
+                color: app.service('reply').replyColor.normal.amber,
                 description: text,
                 timestamp: new Date(),
                 footer: {
@@ -106,7 +117,7 @@ export default (app) => {
 
                     await sendMessage('', msgs[0], false, {
                         embed: {
-                            color: handleReply.replyColor.normal.purple,
+                            color: app.service('reply').replyColor.normal.purple,
                             title: 'Conversation',
                             description: text,
                             timestamp: new Date(),
@@ -147,7 +158,7 @@ export default (app) => {
             requestDialogFlow(message.author.id, text, dfCb);
         },
         sendMessage,
-        sendErrorMessage,
-        replyHandler
+        sendInfoMessage,
+        sendErrorMessage
     };
 };

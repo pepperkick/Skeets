@@ -3,6 +3,10 @@
         "Hello there **<name>**!",
         "Hi **<name>**!"
     ],
+    "common.error.onlyGuild": [
+        "I can only accept that in a guild chat",
+        "This belongs to guild chat!"
+    ],
     "voice.error.notInVoiceChannel": [
         "You are not in a voice channel!",
         "I cannot find you in any voice channel!",

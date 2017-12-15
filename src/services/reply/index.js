@@ -1,4 +1,8 @@
+import debug from 'debug';
+
 import reply from './reply';
+
+const log = debug('eve:service:reply');
 
 const colors = {
     normal: {
@@ -38,6 +42,8 @@ export default () => {
         getReply: (tag) => {
             const replies = reply[tag];
             const index = new Date().getTime() % replies.length;
+
+            log(`Serving reply for tag ${tag}`);
 
             return replies[index];
         },

@@ -11,8 +11,12 @@ export default async (app) => {
     const botJoin = async (data) => {
         const member = data.message.member;
 
+        if (!data.message.guild) {
+            return await app.service('messages').sendErrorMessage(app.service('reply').getReply('common.error.onlyGuild'), data.message);
+        }
+
         if (!member.voiceChannel) {
-            app.service('messages').sendErrorMessage(app.service('reply').getReply('voice.error.notInVoiceChannel'), data.message);
+            return await app.service('messages').sendErrorMessage(app.service('reply').getReply('voice.error.notInVoiceChannel'), data.message);
         }
 
         await joinChannel(member.voiceChannel);

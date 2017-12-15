@@ -8,13 +8,10 @@ export default (app) => {
     app.registerAction('chat.greet', async data => {
         const message = data.message;
         const user = message.author.username;
-        const session = message.author.id;
-        const guild = message.guild.id;
         const text = app.service('reply').getReply('chat.greet');
         const reply = app.service('reply').processReply.name(text, user);
 
-        const msg = await sendMessage(reply, message, true);
-        processToBank(guild, session, msg);
+        await sendMessage(reply, message, true);
     });
 
     const requestDialogFlow = (session, text, callback) => {
@@ -31,18 +28,19 @@ export default (app) => {
         request.end();
     };
 
-    const handleMessage = (action, message) => {
+    const handleMessage = (action, message, response) => {
         const session = message.author.id;
-        const guild = message.guild.id;
 
-        app.callAction(action, { message });
+        app.callAction(action, { message, response });
 
-        processToBank(guild, session, message);
+        processToBank(message.guild ? message.guild.id : session, session, message);
     };
 
-    const sendMessage = async (text, message, embed, options={}) => {
-        if (embed) {
-            return await message.channel.send('', {
+    const sendMessage = async (text, message, options = {}) => {
+        const session = message.author.id;
+
+        if (!options.embed) {
+            return processToBank(message.guild ? message.guild.id : session, session, await message.channel.send('', {
                 embed: {
                     color: app.service('reply').replyColor.normal.cyan,
                     description: text,
@@ -52,14 +50,14 @@ export default (app) => {
                         text: config.get('bot.name')
                     }
                 }
-            });
+            }));
         } else {
-            return await message.channel.send(text, options);
+            return processToBank(message.guild ? message.guild.id : session, session, await message.channel.send(text, options));
         }
     };
 
     const sendInfoMessage = async (text, message) => {
-        return await message.channel.send('', {
+        return await sendMessage('', message, {
             embed: {
                 color: app.service('reply').replyColor.normal.green,
                 description: text,
@@ -73,7 +71,7 @@ export default (app) => {
     };
 
     const sendErrorMessage = async (text, message) => {
-        return await message.channel.send('', {
+        return await sendMessage('', message, {
             embed: {
                 color: app.service('reply').replyColor.normal.amber,
                 description: text,
@@ -86,25 +84,30 @@ export default (app) => {
         });
     };
 
-    const processToBank = (guild, session, message) => {
-        if (!msgBank[guild])
-            msgBank[guild] = [];
+    const processToBank = (id, session, message) => {
+        if (!msgBank[id])
+            msgBank[id] = [];
 
-        if (!msgBank[guild][session])
-            msgBank[guild][session] = [];
+        if (!msgBank[id][session])
+            msgBank[id][session] = [];
 
-        msgBank[guild][session].push(message);
+        msgBank[id][session].push(message);
+
+        return message;
     };
 
     const checkIfGroupable = async () => {
         if (!config.get('message.autoGroupMessages')) return;
 
-        for (const guild in msgBank) {
-            for (const session in msgBank[guild]) {
-                const msgs = msgBank[guild][session];
+        for (const id in msgBank) {
+            for (const session in msgBank[id]) {
+                const msgs = msgBank[id][session];
 
                 if (msgs.length > config.get('message.groupMessages')) {
                     let text = '';
+
+                    log(`Grouping messages from ${session}:${id}`);
+
                     if (!msgs[0]) throw new Error('Unable to group messages');
 
                     for (var i = 0; i < msgs.length; i++) {
@@ -112,10 +115,12 @@ export default (app) => {
                             text += `**${msgs[i].author.username}**: ${msgs[i].embeds[0].description}\n`;
                         else
                             text += `**${msgs[i].author.username}**: ${msgs[i].content}\n`;
-                        msgs[i].delete();
+
+                        if (id !== session)
+                            msgs[i].delete();
                     }
 
-                    await sendMessage('', msgs[0], false, {
+                    await sendMessage('', msgs[0], {
                         embed: {
                             color: app.service('reply').replyColor.normal.purple,
                             title: 'Conversation',
@@ -128,7 +133,7 @@ export default (app) => {
                         }
                     });
 
-                    msgBank[guild][session] = [];
+                    msgBank[id][session] = [];
                 }
             }
         }
@@ -149,9 +154,11 @@ export default (app) => {
                 if (dfValue >= config.get('service.dialogflow.threshold')) {
                     log(`Detected remote action ${dfAction}`);
 
-                    handleMessage(dfAction, message);
+                    handleMessage(dfAction, message, response);
                 } else {
                     log('Unable to detect action remotely, falback to default action');
+
+                    //TODO: Implement default action
                 }
             };
 

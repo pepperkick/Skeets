@@ -5,6 +5,7 @@ import discordVoice from './discord-voice';
 import reply from './reply';
 import messages from './messages';
 import dialogflow from './dialogflow';
+import player from './player';
 
 const log = debug('eve:services');
 
@@ -36,11 +37,13 @@ export default async (app) => {
             throw new Error(`Unknown command ${commnad}`);
     };
 
+    await player(app);
+
     return {
         discordVoice: await discordVoice(app),
         discord: await discord(app),
         reply: await reply(app),
         messages: await messages(app),
-        dialogflow: await dialogflow(app),
+        dialogflow: await dialogflow(app)
     };
 };

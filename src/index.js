@@ -14,7 +14,6 @@ const init = async () => {
 process.on('uncaughtException', async (error) => {
     log(error);
     await SendErrorMesage('Fatal Exception', error);
-    Shutdown('Fatal Exception');
 });
 
 process.on('unhandledRejection', async (reason) => {

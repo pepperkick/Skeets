@@ -40,10 +40,16 @@ export default async (app) => {
     };
 
     const joinChannel = async (channel) => {
-        log(`Connecting to channel ${channel.id}`);
+        if (!channel) {
+            throw new Error('Recieved empty channel');
+        } else if (channel instanceof Object) {
+            log(`Connecting to channel ${channel.id}`);
 
-        if (channel.type !== 'voice') {
-            throw new Error(`Channel ${channel.id} is not a voice channel`);
+            if (channel.type !== 'voice') {
+                throw new Error(`Channel ${channel.id} is not a voice channel`);
+            }
+        } else {
+            channel = app.service('discord').channels.get(channel);
         }
 
         try {

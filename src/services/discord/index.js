@@ -7,8 +7,22 @@ const bot = new Discord.Client();
 
 function filterMessage(message) {
     const text = message.content;
+    const alias = config.get('bot.alias');
 
-    return /\beve\b/gi.test(text) || text.indexOf(config.get('bot.prefix')) === 0;
+    if (text.indexOf(config.get('bot.prefix')) === 0) {
+        return true;
+    }
+
+    for (let i in alias) {
+        const name = alias[i];
+        const regex = new RegExp(`${name}`, 'gi');
+
+        if (regex.test(text)) {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 export default async (app) => {
@@ -19,7 +33,7 @@ export default async (app) => {
             const voice = app.service('discordVoice');
             const guilds = config.get('guilds');
 
-            for(const id in guilds) {
+            for (const id in guilds) {
                 const channel = await bot.channels.get(guilds[id].voice);
 
                 voice.joinChannel(channel);
@@ -30,6 +44,9 @@ export default async (app) => {
     const attachHandlers = () => {
         bot.on('ready', () => {
             log('Service is ready!');
+
+            // bot.user.setUsername(config.get('bot.name'));
+            // bot.user.setAvatar(config.get('bot.avatar'));
 
             handleVoiceConnections();
         });

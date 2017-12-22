@@ -3,14 +3,44 @@
         "Hello there **<name>**!",
         "Hi **<name>**!"
     ],
+    "chat.acknowledge": [
+        "Alright **<name>**!",
+        "Got it **<name>**!"
+    ],
+    "common.error.failure": [
+        "Something went wrong with that, try again later!",
+        "Looks like something went wrong, maybe try again in a bit!",
+        "I am not quite sure went wrong, but you can try that again"
+    ],
     "common.error.onlyGuild": [
         "I can only accept that in a guild chat",
         "This belongs to guild chat!"
+    ],
+    "player.error.noResult": [
+        "I could not find anything regarding that song",
+        "No results found for the song",
+        "Nothing comes up in youtube for that song"
+    ],
+    "player.info.playlistEmpty": [
+        "Looks like the playlist is empty!"
+    ],
+    "player.info.playlistLast": [
+        "Looks like it's the end of the playlist!",
+        "Looks like we have reached the end of the playlist!",
+        "We have reached the end of the playlist!",
+        "And we have reached the end of the playlist!"
+    ],
+    "player.info.playlistFirst": [
+        "Looks like it's the start of the playlist!"
     ],
     "voice.error.notInVoiceChannel": [
         "You are not in a voice channel!",
         "I cannot find you in any voice channel!",
         "Please join a voice channel first!"
+    ],
+    "voice.error.notInSameVoiceChannel": [
+        "We are not in the same voice channel",
+        "Looks like we are not in the same voice channel"
     ],
     "voice.info.connected": [
         "Joined you!"

@@ -37,10 +37,22 @@ export default (app) => {
     };
 
     const sendMessage = async (text, message, options = {}) => {
-        const session = message.author.id;
+        let session;
+        let channel;
+        let guild;
+
+        if (message instanceof Object) {
+            session = message.author.id;
+            channel = message.channel;
+            guild = message.guild;
+        } else {
+            session = app.service('discord').user.id;
+            channel = app.service('discord').channels.get(message);
+            guild = channel.guild;
+        }
 
         if (!options.embed) {
-            return processToBank(message.guild ? message.guild.id : session, session, await message.channel.send('', {
+            return processToBank(guild ? guild.id : session, session, await channel.send('', {
                 embed: {
                     color: app.service('reply').replyColor.normal.cyan,
                     description: text,
@@ -52,11 +64,25 @@ export default (app) => {
                 }
             }));
         } else {
-            return processToBank(message.guild ? message.guild.id : session, session, await message.channel.send(text, options));
+            return processToBank(guild ? guild.id : session, session, await channel.send(text, options));
         }
     };
 
     const sendInfoMessage = async (text, message) => {
+        return await sendMessage('', message, {
+            embed: {
+                color: app.service('reply').replyColor.normal.cyan,
+                description: text,
+                timestamp: new Date(),
+                footer: {
+                    icon_url: config.get('bot.avatar'),
+                    text: config.get('bot.name')
+                }
+            }
+        });
+    };
+
+    const sendSuccessMessage = async (text, message) => {
         return await sendMessage('', message, {
             embed: {
                 color: app.service('reply').replyColor.normal.green,
@@ -165,6 +191,7 @@ export default (app) => {
             requestDialogFlow(message.author.id, text, dfCb);
         },
         sendMessage,
+        sendSuccessMessage,
         sendInfoMessage,
         sendErrorMessage
     };

@@ -7,6 +7,11 @@
         "Alright **<name>**!",
         "Got it **<name>**!"
     ],
+    "chat.fail": [
+        "I did not understand that",
+        "I could not understand that",
+        "Looks like I don't know what to do regarding this"
+    ],
     "common.error.failure": [
         "Something went wrong with that, try again later!",
         "Looks like something went wrong, maybe try again in a bit!",
@@ -21,6 +26,18 @@
         "No results found for the song",
         "Nothing comes up in youtube for that song"
     ],
+    "player.error.noPlaylist": [
+        "There is no playlist"
+    ],
+    "player.error.noSong": [
+        "There is no song playing"
+    ],
+    "player.error.alreadyPaused": [
+        "The song is already pasued"
+    ],
+    "player.error.alreadyPlaying": [
+        "The song is already playing"
+    ],
     "player.info.playlistEmpty": [
         "Looks like the playlist is empty!"
     ],
@@ -32,6 +49,16 @@
     ],
     "player.info.playlistFirst": [
         "Looks like it's the start of the playlist!"
+    ],
+    "player.info.stopped": [
+        "Stopped and cleared the playlist"
+    ],
+    "player.info.resume": [
+        "Resumed the song"
+    ],
+    "player.info.paused": [
+        "Paused the song",
+        "The song has been paused"
     ],
     "voice.error.notInVoiceChannel": [
         "You are not in a voice channel!",

@@ -3,12 +3,14 @@ import debug from 'debug';
 import discord from './discord';
 import discordVoice from './discord-voice';
 import reply from './reply';
+import file from './file';
 import messages from './messages';
 import dialogflow from './dialogflow';
 import player from './player';
+import lastfm from './lastfm';
 import youtube from './youtube';
 
-const log = debug('eve:services');
+const log = debug('skeets:services');
 
 const actionRegistry = {};
 const commandRegistry = {};
@@ -38,14 +40,19 @@ export default async (app) => {
             throw new Error(`Unknown command ${commnad}`);
     };
 
-
-    return {
+    const services = {
         discordVoice: await discordVoice(app),
         discord: await discord(app),
         reply: await reply(app),
+        file: await file(app),
         messages: await messages(app),
         dialogflow: await dialogflow(app),
         youtube: await youtube(app),
+        lastfm: await lastfm(app),
         player: await player(app)
     };
+
+    services.file.clean();
+
+    return services;
 };

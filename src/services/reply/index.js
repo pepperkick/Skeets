@@ -2,7 +2,7 @@ import debug from 'debug';
 
 import reply from './reply';
 
-const log = debug('eve:service:reply');
+const log = debug('skeets:service:reply');
 
 const colors = {
     normal: {

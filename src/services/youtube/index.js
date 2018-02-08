@@ -3,9 +3,9 @@ import ytdl from 'ytdl-core';
 import config from 'config';
 import Debug from 'debug';
 
-const log = Debug('eve:service:youtube');
+const log = Debug('skeets:service:youtube');
 
-export default async () => {
+export default async (app) => {
     const key = config.get('service.youtube.apikey');
 
     const search = async (q) => {
@@ -29,9 +29,15 @@ export default async () => {
     };
 
     const getStream = async (id) => {
-        const url = `https://www.youtube.com/watch?v=${id}`;
+        try {
+            const url = `https://www.youtube.com/watch?v=${id}`;
 
-        return await ytdl(url, { filter: 'audioonly', quality: 'lowest', retries: 3 });
+            return await ytdl(url, { filter: 'audioonly', quality: 'highest', retries: 3 });
+        } catch (error) {
+            log(error);
+
+            throw new Error(error);
+        }
     };
 
     const getInfo = async (id) => {

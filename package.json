@@ -7,20 +7,29 @@
   "license": "ISC",
   "scripts": {
     "build": "babel src -d dist",
-    "run": "cross-env NODE_ENV=development DEBUG=eve* babel-node src"
+    "run": "cross-env NODE_ENV=development DEBUG=skeets* babel-node src"
   },
   "dependencies": {
     "apiai": "4.0.3",
+    "better-cleverbot-io": "^1.0.2",
+    "cleverbot.io": "^1.0.4",
     "config": "1.27.0",
+    "dateformat": "^3.0.2",
     "debug": "3.1.0",
+    "del": "^3.0.0",
     "discord.js": "11.2.1",
+    "game-server-query": "^1.0.10",
+    "lastfm": "^0.9.2",
+    "lastfmapi": "^0.1.1",
+    "moment": "^2.20.1",
     "natural": "0.5.4",
     "node-opus": "^0.2.7",
     "promise-request": "^0.1.2",
     "request": "^2.83.0",
     "request-promise": "^4.2.2",
+    "socket.io": "^2.0.4",
     "valid-url": "^1.0.9",
-    "ytdl-core": "^0.18.4"
+    "ytdl-core": "^0.20.1"
   },
   "devDependencies": {
     "babel-cli": "6.26.0",

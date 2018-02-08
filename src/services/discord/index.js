@@ -2,7 +2,7 @@ import config from 'config';
 import debug from 'debug';
 import Discord from 'discord.js';
 
-const log = debug('eve:service:discord');
+const log = debug('skeets:service:discord');
 const bot = new Discord.Client();
 
 function filterMessage(message) {
@@ -10,6 +10,13 @@ function filterMessage(message) {
     const alias = config.get('bot.alias');
 
     if (text.indexOf(config.get('bot.prefix')) === 0) {
+        return true;
+    }
+
+    const guild = message.guild.id;
+    const channel = message.channel.id;
+
+    if (config.has(`guilds.${guild}`) && config.get(`guilds.${guild}`).text === channel) {
         return true;
     }
 

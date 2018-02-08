@@ -1,6 +1,6 @@
 import debug from 'debug';
 
-const log = debug('eve:service:discord-voice');
+const log = debug('skeets:service:discord-voice');
 
 const connectionBank = {};
 

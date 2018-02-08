@@ -3,12 +3,12 @@ import config from 'config';
 
 import services from './services';
 
-const log = debug('eve:services');
+const log = debug('skeets');
 const app = {};
 
 const init = async () => {
-    app.service = service => app.services[service];
     app.services = await services(app);
+    app.service = service => app.services[service];
 };
 
 process.on('uncaughtException', async (error) => {

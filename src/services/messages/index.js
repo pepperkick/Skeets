@@ -1,8 +1,10 @@
 import config from 'config';
 import debug from 'debug';
+import request from 'request-promise';
 
-const log = debug('eve:service:messages');
+const log = debug('skeets:service:messages');
 const msgBank = {};
+const sessions = {};
 
 export default (app) => {
     app.registerAction('chat.greet', async data => {
@@ -12,6 +14,15 @@ export default (app) => {
         const reply = app.service('reply').processReply.name(text, user);
 
         await sendMessage(reply, message, true);
+    });
+
+    app.registerAction('default', async data => {
+        const message = data.message;
+        const user = message.author.username;
+        const text = app.service('reply').getReply('chat.fail');
+        const reply = app.service('reply').processReply.name(text, user);
+
+        await sendErrorMessage(reply, message, true);
     });
 
     const requestDialogFlow = (session, text, callback) => {
@@ -173,18 +184,64 @@ export default (app) => {
         handle: message => {
             const text = message.content;
 
-            const dfCb = (response) => {
+            const dfCb = async (response) => {
                 const dfValue = response.result.score;
                 const dfAction = response.result.action;
 
                 if (dfValue >= config.get('service.dialogflow.threshold')) {
-                    log(`Detected remote action ${dfAction}`);
+                    log(`Detected remote action ${dfAction}, DFValue: ${dfValue}`);
 
                     handleMessage(dfAction, message, response);
                 } else {
-                    log('Unable to detect action remotely, falback to default action');
+                    log(`Unable to detect action remotely, falback to default action. DFValue: ${dfValue}`);
 
-                    //TODO: Implement default action
+                    if (dfValue < 0.5) {
+                        const session = message.author.id;
+
+                        try {
+                            if (!sessions[session]) {
+                                const res = await request.post({
+                                    url: 'https://cleverbot.io/1.0/create',
+                                    body: {
+                                        user: config.get('service.cleverbotio.app'),
+                                        key: config.get('service.cleverbotio.secret'),
+                                        nick: session
+                                    },
+                                    json: true
+                                });
+
+                                log(res);
+                            }
+
+                            const response = await request.post({
+                                url: 'https://cleverbot.io/1.0/ask',
+                                body: {
+                                    user: config.get('service.cleverbotio.app'),
+                                    key: config.get('service.cleverbotio.secret'),
+                                    nick: session,
+                                    text
+                                },
+                                json: true
+                            });
+                            const reply = response.response;
+
+                            sessions[session] = true;
+
+                            log(reply);
+
+                            if (!reply) {
+                                return handleMessage('default', message, response);
+                            }
+
+                            await sendMessage(reply, message, true);
+                        } catch (error) {
+                            log(error);
+
+                            handleMessage('default', message, response);
+                        }
+                    } else {
+                        handleMessage('default', message, response);
+                    }
                 }
             };
 

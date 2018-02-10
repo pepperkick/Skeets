@@ -25,6 +25,27 @@ export default (app) => {
         await sendErrorMessage(reply, message, true);
     });
 
+
+    const filterMessage = (message) => {
+        const text = message.content;
+        const alias = config.get('bot.alias');
+
+        if (text.indexOf(config.get('bot.prefix')) === 0) {
+            return true;
+        }
+
+        for (let i in alias) {
+            const name = alias[i];
+            const regex = new RegExp(`${name}`, 'gi');
+
+            if (regex.test(text)) {
+                return true;
+            }
+        }
+
+        return false;
+    };
+
     const requestDialogFlow = (session, text, callback) => {
         const request = app.service('dialogflow').classify(session, text);
 
@@ -184,6 +205,8 @@ export default (app) => {
         handle: message => {
             const text = message.content;
 
+            if (!filterMessage(message)) return;
+
             const dfCb = async (response) => {
                 const dfValue = response.result.score;
                 const dfAction = response.result.action;
@@ -195,7 +218,7 @@ export default (app) => {
                 } else {
                     log(`Unable to detect action remotely, falback to default action. DFValue: ${dfValue}`);
 
-                    if (dfValue < 0.5) {
+                    if (dfValue < 0.5 && filterMessage(message)) {
                         const session = message.author.id;
 
                         try {
@@ -250,6 +273,7 @@ export default (app) => {
         sendMessage,
         sendSuccessMessage,
         sendInfoMessage,
-        sendErrorMessage
+        sendErrorMessage,
+        filterMessage
     };
 };

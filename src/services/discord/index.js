@@ -5,33 +5,6 @@ import Discord from 'discord.js';
 const log = debug('skeets:service:discord');
 const bot = new Discord.Client();
 
-function filterMessage(message) {
-    const text = message.content;
-    const alias = config.get('bot.alias');
-
-    if (text.indexOf(config.get('bot.prefix')) === 0) {
-        return true;
-    }
-
-    const guild = message.guild.id;
-    const channel = message.channel.id;
-
-    if (config.has(`guilds.${guild}`) && config.get(`guilds.${guild}`).text === channel) {
-        return true;
-    }
-
-    for (let i in alias) {
-        const name = alias[i];
-        const regex = new RegExp(`${name}`, 'gi');
-
-        if (regex.test(text)) {
-            return true;
-        }
-    }
-
-    return false;
-}
-
 export default async (app) => {
     const handleVoiceConnections = () => {
         setTimeout(async () => {
@@ -59,7 +32,7 @@ export default async (app) => {
         });
 
         bot.on('message', (message) => {
-            if (message.author.id === bot.user.id || !filterMessage(message)) {
+            if (message.author.id === bot.user.id) {
                 return;
             }
 

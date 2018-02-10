@@ -28,7 +28,7 @@ export default async (app) => {
         return request(options);
     };
 
-    const playlistInfo = async (id) => {
+    const playlistInfo = async (id, page) => {
         const options = {
             uri: 'https://www.googleapis.com/youtube/v3/playlistItems',
             qs: {
@@ -42,10 +42,14 @@ export default async (app) => {
             json: true
         };
 
+        log(page);
+
+        if (page) options.qs.pageToken = page;
+
         log(`Querying youtube for playlist ${id}`);
 
         return request(options);
-    }
+    };
 
     const getStream = async (id) => {
         try {

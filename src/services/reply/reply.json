@@ -60,6 +60,15 @@
         "Paused the song",
         "The song has been paused"
     ],
+    "player.info.repeat.on": [
+        "Turned on repeat mode",
+        "Now this is gonna loop forever!",
+        "LOOP AND LOOP AND LOOP!"
+    ],
+    "player.info.repeat.off": [
+        "Turned off repeat mode",
+        "This songs will not be repeated!"
+    ],
     "voice.error.notInVoiceChannel": [
         "You are not in a voice channel!",
         "I cannot find you in any voice channel!",

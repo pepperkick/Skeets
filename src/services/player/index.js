@@ -12,6 +12,7 @@ const channels = {};
 const messages = {};
 const playerMessages = {};
 const cacheInfo = {};
+const guildSettings = {};
 const streamOptions = { seek: 0, volume: 0.5, passes: 3 };
 
 export default async (app) => {
@@ -103,7 +104,7 @@ export default async (app) => {
     const playURL = async (data) => {
         const message = data.message;
         const entities = data.response.result.parameters;
-        const guildID = message.guild.id;
+        const guild = message.guild.id;
 
         if (!entities.url) {
             await app.service('messages').sendErrorMessage(app.service('reply').getReply('common.error.failure'), message);
@@ -123,40 +124,13 @@ export default async (app) => {
                 if (checkIfPlaylist(url)) {
                     try {
                         const playlistID = url.substr(url.indexOf('list=') + 5);
-                        const info = await app.service('youtube').playlistInfo(playlistID);
-                        const items = info.items;
-                        const text = `Adding songs from the playlist... (0 of ${items.length})`;
-                        const embed = {
-                            color: app.service('reply').replyColor.normal.orange,
-                            description: text,
-                            timestamp: new Date(),
-                            footer: {
-                                icon_url: config.get('bot.avatar'),
-                                text: config.get('bot.name')
-                            }
+                        const pageToken = await queuePlaylist(guild, playlistID);
+
+                        guildSettings[guild] = {
+                            isPlaylist: true,
+                            playlistID: playlistID,
+                            playlistPage: pageToken
                         };
-                        const reply = await app.service('messages').sendMessage('', message, {
-                            embed
-                        });
-
-                        let count = 0;
-
-                        for (const item of items) {
-                            const videoID = item.snippet.resourceId.videoId;
-
-                            await queue(guildID, videoID, { noAnnouce: true, noCache: true });
-
-                            count++;
-
-                            embed.description = `Adding songs from the playlist... (${count} of ${items.length})`;
-
-                            reply.edit('', { embed });
-                        }
-
-                        embed.description = `Added ${count} songs!`;
-                        embed.color = app.service('reply').replyColor.normal.green;
-
-                        reply.edit('', { embed });
                     } catch (error) {
                         log(error);
 
@@ -168,7 +142,11 @@ export default async (app) => {
                         if (!videoID)
                             throw new Error('Video ID not extracted properly');
 
-                        await queue(guildID, videoID);
+                        guildSettings[guild] = {
+                            isPlaylist: false
+                        };
+
+                        await queue(guild, videoID);
                     }
                 } else {
                     let parts = url.split('v=')[1];
@@ -179,7 +157,11 @@ export default async (app) => {
                     if (!videoID)
                         throw new Error('Video ID not extracted properly');
 
-                    await queue(guildID, videoID);
+                    guildSettings[guild] = {
+                        isPlaylist: false
+                    };
+
+                    await queue(guild, videoID);
                 }
             }
         } catch (error) {
@@ -189,6 +171,24 @@ export default async (app) => {
 
             throw new Error(error);
         }
+    };
+
+    const queuePlaylist = async (guild, id, options = {}) => {
+        const info = await app.service('youtube').playlistInfo(id, options.pageToken);
+        const items = info.items;
+
+        for (const item of items) {
+            const videoID = item.snippet.resourceId.videoId;
+
+            await queue(guild, videoID, { noAnnouce: true, noCache: true });
+        }
+
+        if (!options.noAnnouce) {
+            const text = `Added ${items.length} songs from playlist`;
+            await app.service('messages').sendInfoMessage(text, getGuildChannel(guild));
+        }
+
+        return info.nextPageToken;
     };
 
     const playCommand = async (guild, options = {}) => {
@@ -279,13 +279,13 @@ export default async (app) => {
                     url: songInfo.artistUrl
                 },
                 timestamp: new Date(),
-                image: {
+                thumbnail: {
                     url: songInfo.image
                 },
                 fields: [],
                 footer: {
                     icon_url: config.get('bot.avatar'),
-                    text: `${config.get('bot.name')} - Now Playing`
+                    text: `${config.get('bot.name')} - Now Playing - 🔄: ${guildSettings[guild].repeat ? 'On' : 'Off'}`
                 }
             }
         };
@@ -333,6 +333,8 @@ export default async (app) => {
         if (index !== length - 1)
             await message.react('⏭');
 
+        await message.react('🔄');
+
         if (length > 1)
             await message.react('ℹ');
     };
@@ -378,6 +380,7 @@ export default async (app) => {
                 text: `${config.get('bot.name')} - ${getPlaylistLength(guild)} Song(s) - Playlist`
             }
         };
+
         await app.service('messages').sendMessage('', getGuildChannel(guild), {
             embed
         });
@@ -415,9 +418,18 @@ export default async (app) => {
         const index = getPlayerIndex(guild) + 1;
         const song = getPlaylistIndex(guild, index);
 
+        if (guildSettings[guild] && guildSettings[guild].isPlaylist && index > 2 && index >= getPlaylistLength(guild) - 2) {
+            const pageToken = await queuePlaylist(guild, guildSettings[guild].playlistID, { pageToken: guildSettings[guild].playlistPage, noAnnouce: true });
+
+            guildSettings[guild].pageToken = pageToken;
+        }
+
         if (song) {
             play(guild, song);
             setPlayerIndex(guild, index);
+        } else if (guildSettings[guild].repeat) {
+            setPlayerIndex(guild, -1);
+            return playNext(guild);
         } else {
             await app.service('messages').sendInfoMessage(app.service('reply').getReply('player.info.playlistLast'), getGuildChannel(guild));
         }
@@ -520,8 +532,24 @@ export default async (app) => {
         players[guild] = player;
     };
 
-    const repeatCommand = async (guild) => {
+    const repeatCommand = async (guild, options = {}) => {
+        if (!guildSettings[guild].repeat)
+            guildSettings[guild].repeat = true;
+        else
+            guildSettings[guild].repeat = false;
 
+        if (!options.noAnnouce) {
+            if (guildSettings[guild].repeat)
+                await app.service('messages').sendErrorMessage(app.service('reply').getReply('player.info.repeat.on'), getGuildChannel(guild));
+            else
+                await app.service('messages').sendErrorMessage(app.service('reply').getReply('player.info.repeat.off'), getGuildChannel(guild));
+        }
+
+        if (!playerMessages[guild]) return;
+
+        const info = await infoMessage(guild);
+
+        playerMessages[guild].edit('', info);
     };
 
     const getSongInfo = async (song) => {
@@ -625,6 +653,8 @@ export default async (app) => {
                 playNext(guild);
             } else if (react.toString() === 'ℹ') {
                 playlistCommand(guild);
+            } else if (react.toString() === '🔄') {
+                repeatCommand(guild, { noAnnouce: true });
             }
 
             await reaction.remove(user);

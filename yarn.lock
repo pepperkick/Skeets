@@ -1366,6 +1366,13 @@ diffie-hellman@^5.0.0:
     miller-rabin "^4.0.0"
     randombytes "^2.0.0"
 
+discord-rpc@^3.0.0-beta.8:
+  version "3.0.0-beta.8"
+  resolved "https://registry.yarnpkg.com/discord-rpc/-/discord-rpc-3.0.0-beta.8.tgz#3522061d7fcc0dc74c06da90ccde3169f7394e94"
+  dependencies:
+    discord.js "github:hydrabolt/discord.js"
+    snekfetch "^3.5.8"
+
 discord.js@11.2.1:
   version "11.2.1"
   resolved "https://registry.yarnpkg.com/discord.js/-/discord.js-11.2.1.tgz#bfc0f5a8b6398dc372d026e503592646456053fc"
@@ -1375,6 +1382,16 @@ discord.js@11.2.1:
     snekfetch "^3.3.0"
     tweetnacl "^1.0.0"
     ws "^3.1.0"
+
+"discord.js@github:hydrabolt/discord.js":
+  version "12.0.0-dev"
+  resolved "https://codeload.github.com/hydrabolt/discord.js/tar.gz/66c0512de2a3bda5e3ae5f9443425a242987abd5"
+  dependencies:
+    pako "^1.0.0"
+    prism-media "github:hydrabolt/prism-media"
+    snekfetch "^3.5.0"
+    tweetnacl "^1.0.0"
+    ws "^3.3.1"
 
 doctrine@1.5.0:
   version "1.5.0"
@@ -2919,6 +2936,10 @@ p-map@^1.1.1:
   version "1.2.0"
   resolved "https://registry.yarnpkg.com/p-map/-/p-map-1.2.0.tgz#e4e94f311eabbc8633a1e79908165fca26241b6b"
 
+pako@^1.0.0:
+  version "1.0.6"
+  resolved "https://registry.yarnpkg.com/pako/-/pako-1.0.6.tgz#0101211baa70c4bca4a0f63f2206e97b7dfaf258"
+
 pako@~0.2.0:
   version "0.2.9"
   resolved "https://registry.yarnpkg.com/pako/-/pako-0.2.9.tgz#f3f7522f4ef782348da8161bad9ecfd51bf83a75"
@@ -3053,6 +3074,10 @@ preserve@^0.2.0:
 prism-media@^0.0.1:
   version "0.0.1"
   resolved "https://registry.yarnpkg.com/prism-media/-/prism-media-0.0.1.tgz#a3425c9cabd50d1c6c02e543941a11895667bd10"
+
+"prism-media@github:hydrabolt/prism-media":
+  version "0.1.0"
+  resolved "https://codeload.github.com/hydrabolt/prism-media/tar.gz/f6737178d10665934669ab2ff3da23a5ecc23e8c"
 
 private@^0.1.6, private@^0.1.7:
   version "0.1.8"
@@ -3489,6 +3514,10 @@ slice-ansi@1.0.0:
 snekfetch@^3.3.0:
   version "3.5.5"
   resolved "https://registry.yarnpkg.com/snekfetch/-/snekfetch-3.5.5.tgz#c9efdaee55b0359e491b7e42cb05affc487c0c9c"
+
+snekfetch@^3.5.0, snekfetch@^3.5.8:
+  version "3.6.4"
+  resolved "https://registry.yarnpkg.com/snekfetch/-/snekfetch-3.6.4.tgz#d13e80a616d892f3d38daae4289f4d258a645120"
 
 sntp@0.2.x:
   version "0.2.4"
@@ -4010,7 +4039,7 @@ ws@^3.1.0:
     safe-buffer "~5.1.0"
     ultron "~1.1.0"
 
-ws@~3.3.1:
+ws@^3.3.1, ws@~3.3.1:
   version "3.3.3"
   resolved "https://registry.yarnpkg.com/ws/-/ws-3.3.3.tgz#f1cf84fe2d5e901ebce94efaece785f187a228f2"
   dependencies:

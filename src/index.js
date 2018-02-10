@@ -7,8 +7,8 @@ const log = debug('skeets');
 const app = {};
 
 const init = async () => {
-    app.services = await services(app);
     app.service = service => app.services[service];
+    app.services = await services(app);
 };
 
 process.on('uncaughtException', async (error) => {
@@ -22,9 +22,9 @@ process.on('unhandledRejection', async (reason) => {
 });
 
 async function SendErrorMesage(type, error) {
-    const discord = app.service('discord');
-
     try {
+        const discord = app.service('discord');
+
         await discord.channels.get(config.get('bot.channel')).send('', {
             embed: {
                 color: parseInt('F44336', 16),

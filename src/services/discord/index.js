@@ -65,13 +65,24 @@ export default async (app) => {
 
             app.service('messages').handle(message);
         });
+
+        bot.on('messageReactionAdd', (reaction, user) => {
+            if (user.id === bot.user.id) {
+                return;
+            }
+
+            log(`Received reaction on ${reaction.message.id} from ${user.id}`);
+
+            app.service('player').handleReaction(reaction, user);
+        });
     };
 
     const connectDiscord = async () => await bot.login(config.get('service.discord.token'));
 
     try {
         await attachHandlers();
-        await connectDiscord();
+        connectDiscord();
+
         return bot;
     } catch (error) {
         log(error);

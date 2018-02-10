@@ -27,6 +27,7 @@ export default async (app) => {
     app.registerAction('player.stop', (data) => filter('stop', data));
     app.registerAction('player.info', (data) => filter('info', data));
     app.registerAction('player.repeat', (data) => filter('repeat', data));
+    app.registerAction('playlist.info', (data) => filter('playlist', data));
     app.registerAction('music.query', (data) => filter('query', data));
     app.registerAction('music.url', (data) => filter('url', data));
 
@@ -55,8 +56,9 @@ export default async (app) => {
         else if (action === 'pause') pauseCommand(guild);
         else if (action === 'stop') stopCommand(guild);
         else if (action === 'next') playNext(guild);
-        else if (action === 'info') infoCommand(guild);
         else if (action === 'previous') playPrevious(guild);
+        else if (action === 'info') infoCommand(guild);
+        else if (action === 'playlist') playlistCommand(guild);
         else if (action === 'repeat') repeatCommand(guild);
     };
 
@@ -118,15 +120,67 @@ export default async (app) => {
             await app.service('messages').sendSuccessMessage(reply, message);
 
             for (const url of urls) {
-                let parts = url.split('v=')[1];
-                parts = parts != undefined ? parts : entities.url.split('youtu.be/')[1];
+                if (checkIfPlaylist(url)) {
+                    try {
+                        const playlistID = url.substr(url.indexOf('list=') + 5);
+                        const info = await app.service('youtube').playlistInfo(playlistID);
+                        const items = info.items;
+                        const text = `Adding songs from the playlist... (0 of ${items.length})`;
+                        const embed = {
+                            color: app.service('reply').replyColor.normal.orange,
+                            description: text,
+                            timestamp: new Date(),
+                            footer: {
+                                icon_url: config.get('bot.avatar'),
+                                text: config.get('bot.name')
+                            }
+                        };
+                        const reply = await app.service('messages').sendMessage('', message, {
+                            embed
+                        });
 
-                const videoID = parts.split('&')[0];
+                        let count = 0;
 
-                if (!videoID)
-                    throw new Error('Video ID not extracted properly');
+                        for (const item of items) {
+                            const videoID = item.snippet.resourceId.videoId;
 
-                await queue(guildID, videoID);
+                            await queue(guildID, videoID, { noAnnouce: true, noCache: true });
+
+                            count++;
+
+                            embed.description = `Adding songs from the playlist... (${count} of ${items.length})`;
+
+                            reply.edit('', { embed });
+                        }
+
+                        embed.description = `Added ${count} songs!`;
+                        embed.color = app.service('reply').replyColor.normal.green;
+
+                        reply.edit('', { embed });
+                    } catch (error) {
+                        log(error);
+
+                        let parts = url.split('v=')[1];
+                        parts = parts != undefined ? parts : entities.url.split('youtu.be/')[1];
+
+                        const videoID = parts.split('&')[0];
+
+                        if (!videoID)
+                            throw new Error('Video ID not extracted properly');
+
+                        await queue(guildID, videoID);
+                    }
+                } else {
+                    let parts = url.split('v=')[1];
+                    parts = parts != undefined ? parts : entities.url.split('youtu.be/')[1];
+
+                    const videoID = parts.split('&')[0];
+
+                    if (!videoID)
+                        throw new Error('Video ID not extracted properly');
+
+                    await queue(guildID, videoID);
+                }
             }
         } catch (error) {
             log(error);
@@ -137,7 +191,7 @@ export default async (app) => {
         }
     };
 
-    const playCommand = async (guild) => {
+    const playCommand = async (guild, options = {}) => {
         if (!players[guild]) {
             return await app.service('messages').sendInfoMessage(app.service('reply').getReply('player.error.noPlaylist'), getGuildChannel(guild));
         }
@@ -152,11 +206,12 @@ export default async (app) => {
             getPlayerDispatcher(guild).resume();
             setPlayerStatus(guild, 'playing');
 
-            await app.service('messages').sendInfoMessage(app.service('reply').getReply('player.info.resume'), getGuildChannel(guild));
+            if (!options.noAnnouce)
+                await app.service('messages').sendInfoMessage(app.service('reply').getReply('player.info.resume'), getGuildChannel(guild));
         }
     };
 
-    const pauseCommand = async (guild) => {
+    const pauseCommand = async (guild, options = {}) => {
         if (!players[guild]) {
             return await app.service('messages').sendInfoMessage(app.service('reply').getReply('player.error.noPlaylist'), getGuildChannel(guild));
         }
@@ -171,7 +226,8 @@ export default async (app) => {
             getPlayerDispatcher(guild).pause();
             setPlayerStatus(guild, 'paused');
 
-            await app.service('messages').sendInfoMessage(app.service('reply').getReply('player.info.paused'), getGuildChannel(guild));
+            if (!options.noAnnouce)
+                await app.service('messages').sendInfoMessage(app.service('reply').getReply('player.info.paused'), getGuildChannel(guild));
         }
     };
 
@@ -188,41 +244,43 @@ export default async (app) => {
         await app.service('messages').sendInfoMessage(app.service('reply').getReply('player.info.stopped'), getGuildChannel(guild));
 
         delete players[guild];
+        delete playerMessages[guild];
     };
 
-    const infoCommand = async guild => {
+    const infoCommand = async (guild, options = {}) => {
         if (!players[guild]) {
             return await app.service('messages').sendInfoMessage(app.service('reply').getReply('player.error.noPlaylist'), getGuildChannel(guild));
         }
 
+        const message = await infoMessage(guild, options);
+
+        playerMessages[guild] = await app.service('messages').sendMessage('', getGuildChannel(guild), message);
+
+        attachPlayer(guild);
+    };
+
+    const infoMessage = async (guild, options = {}) => {
         const index = getPlayerIndex(guild);
-        const song = getPlaylistIndex(guild, index);
-        const youtubeInfo = await app.service('youtube').getInfo(song);
-        const lastfmInfo = await app.service('lastfm').getInfo(youtubeInfo.title);
-
-        const length = youtubeInfo.length_seconds;
         const played = getPlayerDispatcher(guild).time;
+        const song = getPlaylistIndex(guild, index);
+        const songInfo = await getSongInfo(song);
 
-        const lengthTime = moment.utc(length * 1000).format('HH:mm:ss');
+        const lengthTime = moment.utc(songInfo.length * 1000).format('HH:mm:ss');
         const playedTime = moment.utc(played).format('HH:mm:ss');
 
         const message = {
             embed: {
                 color: app.service('reply').replyColor.normal.cyan,
-                title: `** ${youtubeInfo.title} ** `,
-                description: `** ${playedTime} / ${lengthTime} ** `,
-                url: youtubeInfo.video_url,
+                title: `** ${songInfo.title} ** `,
+                url: songInfo.url,
                 author: {
-                    name: youtubeInfo.author.name,
-                    icon_url: youtubeInfo.author.avatar,
-                    url: youtubeInfo.author.channel_url
+                    name: songInfo.artist,
+                    icon_url: songInfo.artistIcon,
+                    url: songInfo.artistUrl
                 },
                 timestamp: new Date(),
                 image: {
-                    url: youtubeInfo.iurlmaxres
-                        || youtubeInfo.iurlhq
-                        || youtubeInfo.iurlmq
-                        || youtubeInfo.iurlsd
+                    url: songInfo.image
                 },
                 fields: [],
                 footer: {
@@ -232,17 +290,10 @@ export default async (app) => {
             }
         };
 
-        if (lastfmInfo) {
-            message.embed.title = `${lastfmInfo.name} by ${lastfmInfo.artist}`;
-            message.embed.url = lastfmInfo.url;
-
-            if (lastfmInfo.image[2]['#text'] !== '') {
-                message.embed.image = {
-                    url: lastfmInfo.image[2]['#text']
-                };
-            }
-
-            log(lastfmInfo.image);
+        if (!options.noTime) {
+            message.embed.description = `** ${playedTime} / ${lengthTime} ** `;
+        } else {
+            message.embed.description = `** ${lengthTime} ** `;
         }
 
         if (getPlaylistIndex(guild, index - 1)) {
@@ -265,18 +316,79 @@ export default async (app) => {
             });
         }
 
-        playerMessages[guild] = await app.service('messages').sendMessage('', getGuildChannel(guild), message);
-        cacheInfo[song] = youtubeInfo;
+        return message;
+    };
+
+    const attachPlayer = async guild => {
+        const message = playerMessages[guild];
+        const index = getPlayerIndex(guild);
+        const length = getPlaylistLength(guild);
+
+        if (index !== 0)
+            await message.react('⏮');
+
+        await message.react('⏯');
+        await message.react('⏹');
+
+        if (index !== length - 1)
+            await message.react('⏭');
+
+        if (length > 1)
+            await message.react('ℹ');
     };
 
     const playlistCommand = async (guild) => {
+        if (!players[guild]) {
+            return await app.service('messages').sendInfoMessage(app.service('reply').getReply('player.error.noPlaylist'), getGuildChannel(guild));
+        }
 
+        const index = getPlayerIndex(guild);
+        const maxItems = 5;
+        const start = index < 2 ? 0 : index - 2;
+        const end = start + maxItems;
+
+        let songNames = '';
+
+        for (let i = start; i < end; i++) {
+            const song = getPlaylistIndex(guild, i);
+
+            if (!song) continue;
+
+            const songInfo = await getSongInfo(song);
+
+            if (i === index) {
+                songNames += `**${i + 1}: ${songInfo.title}**\n`;
+            } else {
+                songNames += `${i + 1}: ${songInfo.title}\n`;
+            }
+        }
+
+        const embed = {
+            color: app.service('reply').replyColor.normal.cyan,
+            description: 'Playlist',
+            timestamp: new Date(),
+            fields: [
+                {
+                    name: 'Song Titile',
+                    value: songNames
+                }
+            ],
+            footer: {
+                icon_url: config.get('bot.avatar'),
+                text: `${config.get('bot.name')} - ${getPlaylistLength(guild)} Song(s) - Playlist`
+            }
+        };
+        await app.service('messages').sendMessage('', getGuildChannel(guild), {
+            embed
+        });
     };
 
-    const queue = async (guild, id) => {
-        const info = await app.service('youtube').getInfo(id);
-        const text = `Added ** [${info.title}](${info.video_url}) ** by ** [${info.author.name}](${info.author.channel_url}) ** to the playlist`;
-        await app.service('messages').sendInfoMessage(text, getGuildChannel(guild));
+    const queue = async (guild, id, options = {}) => {
+        if (!options.noAnnouce) {
+            const info = await app.service('youtube').getInfo(id);
+            const text = `Added ** [${info.title}](${info.video_url}) ** by ** [${info.author.name}](${info.author.channel_url}) ** to the playlist`;
+            await app.service('messages').sendInfoMessage(text, getGuildChannel(guild));
+        }
 
         if (players[guild]) {
             const status = getPlayerStatus(guild);
@@ -285,7 +397,7 @@ export default async (app) => {
 
             if (status === 'stopped') {
                 playNext(guild);
-            } else {
+            } else if (!options.noCache) {
                 app.service('file').cache(id);
             }
         } else {
@@ -316,7 +428,16 @@ export default async (app) => {
             return await app.service('messages').sendInfoMessage(app.service('reply').getReply('player.error.noPlaylist'), getGuildChannel(guild));
         }
 
-        const index = getPlayerIndex(guild) - 1;
+        let index;
+
+        const status = getPlayerStatus(guild);
+
+        if (status === 'playing' || status === 'paused') {
+            index = getPlayerIndex(guild) - 1;
+        } else {
+            index = getPlayerIndex(guild);
+        }
+
         const song = getPlaylistIndex(guild, index);
 
         if (song) {
@@ -361,7 +482,7 @@ export default async (app) => {
         });
 
         if (!options.noinfo)
-            infoCommand(guild);
+            infoCommand(guild, { noTime: true });
     };
 
     const createPlayer = async (guild) => {
@@ -403,18 +524,71 @@ export default async (app) => {
 
     };
 
-    const getSongInfo = async (id) => {
-        const youtubeInfo = await app.service('youtube').getInfo(id);
+    const getSongInfo = async (song) => {
+        if (cacheInfo[song])
+            return cacheInfo[song];
+
+        const youtubeInfo = await app.service('youtube').getInfo(song);
         const lastfmInfo = await app.service('lastfm').getInfo(youtubeInfo.title);
 
+        const youtubePicURL = youtubeInfo.iurlmaxres
+            || youtubeInfo.iurlhq
+            || youtubeInfo.iurlmq
+            || youtubeInfo.iurlsd;
 
+        let songInfo = {};
+
+        if (lastfmInfo) {
+            songInfo = {
+                title: lastfmInfo.name,
+                artist: lastfmInfo.artist,
+                url: lastfmInfo.url
+            };
+
+            if (lastfmInfo.image[2]['#text'] !== '') {
+                songInfo.image = lastfmInfo.image[2]['#text'];
+            } else {
+                songInfo.image = youtubePicURL;
+            }
+
+            songInfo.lastfmInfo = lastfmInfo;
+        } else {
+            songInfo = {
+                title: youtubeInfo.name,
+                artist: youtubeInfo.author.name,
+                url: youtubeInfo.video_url,
+                image: youtubePicURL
+            };
+        }
+
+        songInfo.youtubeInfo = youtubeInfo;
+        songInfo.artistUrl = youtubeInfo.author.channel_url;
+        songInfo.artistIcon = youtubeInfo.author.avatar;
+        songInfo.length = youtubeInfo.length_seconds;
+
+        cacheInfo[song] = songInfo;
+
+        return songInfo;
     };
+
+    setInterval(async () => {
+        for (const guild in playerMessages) {
+            if (getPlayerStatus(guild) !== 'playing') continue;
+
+            const info = await infoMessage(guild);
+
+            playerMessages[guild].edit('', info);
+        }
+    }, 10000);
+
+    const checkIfPlaylist = async url => url.indexOf('list') > 0;
 
     const getGuildChannel = (guild) => channels[guild];
     const getGuildMessage = (guild) => messages[guild];
 
     const addToPlaylist = (guild, id) => players[guild].playlist.push(id);
     const getPlaylistIndex = (guild, index) => players[guild].playlist[index];
+    const getPlaylistLength = (guild) => players[guild].playlist.length;
 
     const getPlayerStatus = (guild) => players[guild].status;
     const getPlayerIndex = (guild) => players[guild].index;
@@ -426,6 +600,34 @@ export default async (app) => {
     const setPlayerIndex = (guild, index) => players[guild].index = index;
 
     return {
+        handleReaction: async (reaction, user) => {
+            const message = reaction.message;
+            const react = reaction.emoji;
+            const guild = message.guild.id;
 
+            if (playerMessages[guild].id !== message.id) return;
+
+            if (!message.guild) {
+                return await app.service('messages').sendErrorMessage(app.service('reply').getReply('common.error.onlyGuild'), message);
+            }
+
+            if (react.toString() === '⏮') {
+                playPrevious(guild);
+            } else if (react.toString() === '⏯') {
+                if (getPlayerStatus(guild) === 'playing') {
+                    pauseCommand(guild, { noAnnouce: true });
+                } else {
+                    playCommand(guild, { noAnnouce: true });
+                }
+            } else if (react.toString() === '⏹') {
+                stopCommand(guild);
+            } else if (react.toString() === '⏭') {
+                playNext(guild);
+            } else if (react.toString() === 'ℹ') {
+                playlistCommand(guild);
+            }
+
+            await reaction.remove(user);
+        }
     };
 };

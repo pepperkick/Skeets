@@ -28,6 +28,25 @@ export default async (app) => {
         return request(options);
     };
 
+    const playlistInfo = async (id) => {
+        const options = {
+            uri: 'https://www.googleapis.com/youtube/v3/playlistItems',
+            qs: {
+                part: 'snippet',
+                key,
+                playlistId: id
+            },
+            headers: {
+                'User-Agent': 'Request-Promise'
+            },
+            json: true
+        };
+
+        log(`Querying youtube for playlist ${id}`);
+
+        return request(options);
+    }
+
     const getStream = async (id) => {
         try {
             const url = `https://www.youtube.com/watch?v=${id}`;
@@ -48,6 +67,7 @@ export default async (app) => {
 
     return {
         search,
+        playlistInfo,
         getStream,
         getInfo
     };

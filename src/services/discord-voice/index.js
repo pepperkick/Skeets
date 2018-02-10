@@ -58,6 +58,8 @@ export default async (app) => {
             pushToBank(channel.guild.id, connection);
             attachHandlers(connection);
 
+            log(`Connected to channel ${channel.id}`);
+
             return connection;
         } catch (error) {
             log(error);

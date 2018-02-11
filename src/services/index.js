@@ -9,6 +9,8 @@ import dialogflow from './dialogflow';
 import player from './player';
 import lastfm from './lastfm';
 import youtube from './youtube';
+import cleverbot from './cleverbot';
+import api from './api';
 
 const log = debug('skeets:services');
 
@@ -16,14 +18,17 @@ const actionRegistry = {};
 const commandRegistry = {};
 
 export default async (app) => {
-    app.registerAction = (action, func) => {
-        actionRegistry[action] = func;
-        log(`Action registered ${action}`);
+    app.registerAction = (service, action, func) => {
+        if (!actionRegistry[service])
+            actionRegistry[service] = {};
+
+        actionRegistry[service][action] = func;
+        log(`Action registered ${action} under service ${service}`);
     };
 
-    app.callAction = (action, data) => {
-        if (actionRegistry[action])
-            actionRegistry[action](data);
+    app.callAction = (servicce, action, data) => {
+        if (actionRegistry[servicce][action])
+            actionRegistry[servicce][action](data);
         else
             throw new Error(`Unknown action ${action}`);
     };
@@ -49,7 +54,9 @@ export default async (app) => {
         dialogflow: await dialogflow(app),
         youtube: await youtube(app),
         lastfm: await lastfm(app),
-        player: await player(app)
+        player: await player(app),
+        cleverbot: await cleverbot(app),
+        api: await api(app)
     };
 
     services.file.clean();

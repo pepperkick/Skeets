@@ -20,17 +20,17 @@ export default async (app) => {
         guildOnly: true,
     }, (data) => playCommand(data));
 
-    app.registerAction('player.play', (data) => filter('play', data));
-    app.registerAction('player.forward', (data) => filter('next', data));
-    app.registerAction('player.backward', (data) => filter('previous', data));
-    app.registerAction('player.pause', (data) => filter('pause', data));
-    app.registerAction('player.resume', (data) => filter('play', data));
-    app.registerAction('player.stop', (data) => filter('stop', data));
-    app.registerAction('player.info', (data) => filter('info', data));
-    app.registerAction('player.repeat', (data) => filter('repeat', data));
-    app.registerAction('playlist.info', (data) => filter('playlist', data));
-    app.registerAction('music.query', (data) => filter('query', data));
-    app.registerAction('music.url', (data) => filter('url', data));
+    app.registerAction('discord', 'player.play', (data) => filter('play', data));
+    app.registerAction('discord', 'player.forward', (data) => filter('next', data));
+    app.registerAction('discord', 'player.backward', (data) => filter('previous', data));
+    app.registerAction('discord', 'player.pause', (data) => filter('pause', data));
+    app.registerAction('discord', 'player.resume', (data) => filter('play', data));
+    app.registerAction('discord', 'player.stop', (data) => filter('stop', data));
+    app.registerAction('discord', 'player.info', (data) => filter('info', data));
+    app.registerAction('discord', 'player.repeat', (data) => filter('repeat', data));
+    app.registerAction('discord', 'playlist.info', (data) => filter('playlist', data));
+    app.registerAction('discord', 'music.query', (data) => filter('query', data));
+    app.registerAction('discord', 'music.url', (data) => filter('url', data));
 
     const filter = async (action, data) => {
         const message = data.message;
@@ -466,7 +466,6 @@ export default async (app) => {
 
         setPlayerStatus(guild, 'queued');
 
-        const url = `https://www.youtube.com/watch?v=${id}`;
         const file = app.service('file').getFile(id);
 
         let dispatcher;
@@ -474,7 +473,8 @@ export default async (app) => {
         if (file) {
             dispatcher = await getPlayerConnection(guild).playFile(file.path, streamOptions);
         } else {
-            dispatcher = await getPlayerConnection(guild).playStream(ytdl(url), streamOptions);
+            const stream = await app.service('youtube').getStream(id);
+            dispatcher = await getPlayerConnection(guild).playStream(stream, streamOptions);
         }
 
         log(`Playing ${id} !`);
@@ -529,6 +529,7 @@ export default async (app) => {
         player.index = -1;
         player.connection = voiceConnection;
 
+        guildSettings[guild] = {};
         players[guild] = player;
     };
 

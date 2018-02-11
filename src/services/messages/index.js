@@ -1,13 +1,13 @@
 import config from 'config';
 import debug from 'debug';
-import request from 'request-promise';
+
+import apiActions from './actions/sourcemod';
 
 const log = debug('skeets:service:messages');
 const msgBank = {};
-const sessions = {};
 
 export default (app) => {
-    app.registerAction('chat.greet', async data => {
+    app.registerAction('discord', 'chat.greet', async data => {
         const message = data.message;
         const user = message.author.username;
         const text = app.service('reply').getReply('chat.greet');
@@ -16,7 +16,7 @@ export default (app) => {
         await sendMessage(reply, message, true);
     });
 
-    app.registerAction('default', async data => {
+    app.registerAction('discord', 'default', async data => {
         const message = data.message;
         const user = message.author.username;
         const text = app.service('reply').getReply('chat.fail');
@@ -25,9 +25,9 @@ export default (app) => {
         await sendErrorMessage(reply, message, true);
     });
 
+    apiActions(app);
 
-    const filterMessage = (message) => {
-        const text = message.content;
+    const filterMessage = (text) => {
         const alias = config.get('bot.alias');
 
         if (text.indexOf(config.get('bot.prefix')) === 0) {
@@ -63,7 +63,7 @@ export default (app) => {
     const handleMessage = (action, message, response) => {
         const session = message.author.id;
 
-        app.callAction(action, { message, response });
+        app.callAction('discord', action, { message, response });
 
         processToBank(message.guild ? message.guild.id : session, session, message);
     };
@@ -202,10 +202,10 @@ export default (app) => {
     }, 30 * 1000);
 
     return {
-        handle: message => {
+        handle: (message) => {
             const text = message.content;
 
-            if (!filterMessage(message)) return;
+            if (!filterMessage(text)) return;
 
             const dfCb = async (response) => {
                 const dfValue = response.result.score;
@@ -218,48 +218,12 @@ export default (app) => {
                 } else {
                     log(`Unable to detect action remotely, falback to default action. DFValue: ${dfValue}`);
 
-                    if (dfValue < 0.5 && filterMessage(message)) {
-                        const session = message.author.id;
-
+                    if (dfValue < 0.5 && filterMessage(text)) {
                         try {
-                            if (!sessions[session]) {
-                                const res = await request.post({
-                                    url: 'https://cleverbot.io/1.0/create',
-                                    body: {
-                                        user: config.get('service.cleverbotio.app'),
-                                        key: config.get('service.cleverbotio.secret'),
-                                        nick: session
-                                    },
-                                    json: true
-                                });
-
-                                log(res);
-                            }
-
-                            const response = await request.post({
-                                url: 'https://cleverbot.io/1.0/ask',
-                                body: {
-                                    user: config.get('service.cleverbotio.app'),
-                                    key: config.get('service.cleverbotio.secret'),
-                                    nick: session,
-                                    text
-                                },
-                                json: true
-                            });
-                            const reply = response.response;
-
-                            sessions[session] = true;
-
-                            log(reply);
-
-                            if (!reply) {
-                                return handleMessage('default', message, response);
-                            }
+                            const reply = app.service('cleverbot').getReply(message.author.id, text);
 
                             await sendMessage(reply, message, true);
                         } catch (error) {
-                            log(error);
-
                             handleMessage('default', message, response);
                         }
                     } else {
@@ -269,6 +233,34 @@ export default (app) => {
             };
 
             requestDialogFlow(message.author.id, text, dfCb);
+        },
+        handleSourcemod: (text, author, server) => {
+            const dfCb = async (response) => {
+                const dfValue = response.result.score;
+                const dfAction = response.result.action;
+
+                if (dfValue >= config.get('service.dialogflow.threshold')) {
+                    log(`Detected remote action ${dfAction}, DFValue: ${dfValue}`);
+
+                    app.callAction('sourcemod', dfAction, { server, response });
+                } else {
+                    log(`Unable to detect action remotely, falback to default action. DFValue: ${dfValue}`);
+
+                    if (dfValue < config.get('service.dialogflow.threshold')) {
+                        try {
+                            const reply = await app.service('cleverbot').getReply(author, text);
+
+                            app.callAction('sourcemod', 'chat', { reply, server });
+                        } catch (error) {
+                            app.callAction('sourcemod', 'default', { server });
+                        }
+                    } else {
+                        app.callAction('sourcemod', 'default', { server });
+                    }
+                }
+            };
+
+            requestDialogFlow(author, text, dfCb);
         },
         sendMessage,
         sendSuccessMessage,

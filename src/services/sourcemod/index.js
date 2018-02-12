@@ -56,26 +56,14 @@ export default (app) => {
             log(videoID);
 
             const stream = await app.service('youtube').getStream(videoID);
-            const volume = req.query.volume || 1;
 
-            let seek = 0;
-
-            if (req.query.seek)
-                seek = req.query.seek;
-
-            ffmpeg(stream)
-                .audioBitrate('320')
-                .format('opus')
-                .seekInput(seek)
-                .audioFilters(`volume=${volume}`)
-                .writeToStream(res);
+            stream.pipe(res);
         } catch (error) {
             log(error);
 
             return res.sendStatus(404);
         }
     });
-
 
     express.get('/api/sourcemod/action', async (req, res) => {
         const action = req.query.action;

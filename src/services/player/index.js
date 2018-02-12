@@ -9,6 +9,7 @@ const log = debug('skeets:service:player');
 
 const players = {};
 const channels = {};
+const channelObj = {};
 const messages = {};
 const playerMessages = {};
 const cacheInfo = {};
@@ -49,6 +50,7 @@ export default async (app) => {
         }
 
         channels[message.guild.id] = message.channel.id;
+        channelObj[message.guild.id] = message.channel;
         messages[message.guild.id] = message;
 
         if (action === 'query') searchQuery(data);
@@ -253,8 +255,16 @@ export default async (app) => {
         }
 
         const message = await infoMessage(guild, options);
+        const messages = await channelObj[guild].fetchMessages({ limit: 1 });
 
-        playerMessages[guild] = await app.service('messages').sendMessage('', getGuildChannel(guild), message);
+        if (playerMessages[guild] && messages.first().id === playerMessages[guild].id) {
+            playerMessages[guild].edit('', message);
+        } else {
+            playerMessages[guild] = await app.service('messages').sendMessage('', getGuildChannel(guild), message);
+        }
+
+        log(messages.first().id);
+        log(playerMessages[guild].id);
 
         attachPlayer(guild);
     };

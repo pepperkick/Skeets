@@ -55,7 +55,7 @@ export default async (app) => {
         try {
             const url = `https://www.youtube.com/watch?v=${id}`;
 
-            return await ytdl(url, { filter: 'audioonly', quality: 'highest', retries: 3 });
+            return await ytdl(url, { filter: 'audioonly', quality: 'highest', retries: 5 });
         } catch (error) {
             log(error);
 

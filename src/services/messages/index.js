@@ -1,8 +1,6 @@
 import config from 'config';
 import debug from 'debug';
 
-import apiActions from './actions/sourcemod';
-
 const log = debug('skeets:service:messages');
 const msgBank = {};
 
@@ -24,8 +22,6 @@ export default (app) => {
 
         await sendErrorMessage(reply, message, true);
     });
-
-    apiActions(app);
 
     const filterMessage = (text) => {
         const alias = config.get('bot.alias');
@@ -242,7 +238,7 @@ export default (app) => {
                 if (dfValue >= config.get('service.dialogflow.threshold')) {
                     log(`Detected remote action ${dfAction}, DFValue: ${dfValue}`);
 
-                    app.callAction('sourcemod', dfAction, { server, response });
+                    app.callAction('sourcemod', dfAction, { server, author, response });
                 } else {
                     log(`Unable to detect action remotely, falback to default action. DFValue: ${dfValue}`);
 
@@ -250,7 +246,7 @@ export default (app) => {
                         try {
                             const reply = await app.service('cleverbot').getReply(author, text);
 
-                            app.callAction('sourcemod', 'chat', { reply, server });
+                            app.callAction('sourcemod', 'chat', { reply, author, server });
                         } catch (error) {
                             app.callAction('sourcemod', 'default', { server });
                         }

@@ -34,7 +34,7 @@ export default (app) => {
             const title = querystring.escape(info.title);
             const artist = querystring.escape(info.author.name);
 
-            return request(`http://${data.server.ip}:${data.server.port}/skeets/playerurl?url="http://chillypunch.com:7587/api/yt?part=${videoID}"&client=${data.server.client}&title=${title}&artist=${artist}`);
+            return request(`http://${data.server.ip}:${data.server.port}/skeets/player_url?id=${videoID}&author=${data.author}"&client=${data.server.client}&title=${title}&artist=${artist}`);
         } catch (error) {
             log(error);
 
@@ -43,7 +43,29 @@ export default (app) => {
     });
 
     app.registerAction('sourcemod', 'player.stop', async (data) => {
+        const text = await app.service('reply').getReply('player.info.stopped');
+
         log(`Stopping for client ${data.server.client} at ${data.server.ip}:${data.server.port}`);
-        return request(`http://${data.server.ip}:${data.server.port}/skeets/playerstop?client=${data.server.client}`);
+        return request(`http://${data.server.ip}:${data.server.port}/skeets/player_stop?client=${data.server.client}&text=${text}`);
+    });
+
+    app.registerAction('sourcemod', 'player.pause', async (data) => {
+        const socket = await app.service('sourcemod').getSocketByID(data.author);
+        const text = await app.service('reply').getReply('player.info.paused');
+
+        log(`Pausing for client ${data.server.client}(${data.author}) at ${data.server.ip}:${data.server.port}`);
+        socket.emit('pause', 'ok');
+
+        return request(`http://${data.server.ip}:${data.server.port}/skeets/chat_client?client=${data.server.client}&text=${text}`);
+    });
+
+    app.registerAction('sourcemod', 'player.play', async (data) => {
+        const socket = await app.service('sourcemod').getSocketByID(data.author);
+        const text = await app.service('reply').getReply('player.info.resume');
+
+        log(`Resuming for client ${data.server.client}(${data.author}) at ${data.server.ip}:${data.server.port}`);
+        socket.emit('play', 'ok');
+
+        return request(`http://${data.server.ip}:${data.server.port}/skeets/chat_client?client=${data.server.client}&text=${text}`);
     });
 };

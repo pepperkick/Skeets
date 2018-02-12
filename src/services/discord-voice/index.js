@@ -5,7 +5,7 @@ const log = debug('skeets:service:discord-voice');
 const connectionBank = {};
 
 export default async (app) => {
-    app.registerAction('bot.join', (data) => botJoin(data));
+    app.registerAction('discord', 'bot.join', (data) => botJoin(data));
     app.registerCommand('join', (data) => botJoin(data));
 
     const botJoin = async (data) => {

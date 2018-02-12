@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <title>Skeets</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="/css/bootstrap-responsive.min.css" />
+  <link rel="stylesheet" href="/css/uniform.css" />
+  <link rel="stylesheet" href="/css/select2.css" />
+  <link rel="stylesheet" href="/css/matrix-style.css" />
+  <link rel="stylesheet" href="/css/matrix-media.css" />
+  <link href="https://use.fontawesome.com/releases/v5.0.6/css/all.css" rel="stylesheet">
+  <link href='http://fonts.googleapis.com/css?family=Open+Sans:400,700,800' rel='stylesheet' type='text/css'>
+</head>
+
+<body>
+    <audio id="audio">
+        <source src="<%= url %>" type="audio/mpeg">
+    Your browser does not support the audio element.
+    </audio>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.4/socket.io.slim.js"></script>
+    <script>
+        var element = document.getElementById("audio");
+        var socket = io('chillypunch.com:7587');
+
+        socket.emit('auth', '<%= author %>');
+
+        socket.on('play', () => {
+            element.play();
+        });
+
+        socket.on('pause', () => {
+            element.pause();
+        });
+
+        setTimeout(() => {
+            element.play();
+            element.volume = 0.5;
+        }, 5000);
+
+        setInterval(() => {
+            socket.emit('played', {
+                time: element.currentTime,
+                id: "<%= id %>"
+            });
+        }, 10000);
+    </script>
+</body>

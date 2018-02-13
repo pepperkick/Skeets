@@ -10,6 +10,7 @@
     "run": "cross-env NODE_ENV=development DEBUG=skeets* babel-node src"
   },
   "dependencies": {
+    "ampermusic": "^0.0.2",
     "apiai": "4.0.3",
     "better-cleverbot-io": "^1.0.2",
     "cleverbot.io": "^1.0.4",

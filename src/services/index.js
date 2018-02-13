@@ -10,6 +10,7 @@ import player from './player';
 import lastfm from './lastfm';
 import youtube from './youtube';
 import cleverbot from './cleverbot';
+import connection from './connection';
 import sourcemod from './sourcemod';
 
 const log = debug('skeets:services');
@@ -56,6 +57,7 @@ export default async (app) => {
         lastfm: await lastfm(app),
         player: await player(app),
         cleverbot: await cleverbot(app),
+        connection: await connection(app),
         sourcemod: await sourcemod(app)
     };
 

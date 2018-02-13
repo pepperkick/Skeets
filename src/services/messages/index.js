@@ -214,12 +214,14 @@ export default (app) => {
                 } else {
                     log(`Unable to detect action remotely, falback to default action. DFValue: ${dfValue}`);
 
-                    if (dfValue < 0.5 && filterMessage(text)) {
+                    if (dfValue < 0.5) {
                         try {
-                            const reply = app.service('cleverbot').getReply(message.author.id, text);
+                            const reply = await app.service('cleverbot').getReply(message.author.id, text);
 
-                            await sendMessage(reply, message, true);
+                            await sendMessage(reply, message);
                         } catch (error) {
+                            log(error);
+
                             handleMessage('default', message, response);
                         }
                     } else {

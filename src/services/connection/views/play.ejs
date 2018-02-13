@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <title>Skeets</title>
+</head>
+
+<body>
+    <audio id="audio">
+        <source src="" type="audio/mpeg">
+    Your browser does not support the audio element.
+    </audio>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.4/socket.io.slim.js"></script>
+    <script>
+        var element = document.getElementById("audio");
+        var socket = io('chillypunch.com:7587');
+
+        socket.emit('auth', '<%= author %>');
+
+        socket.on('play', () => {
+            element.play();
+        });
+
+        socket.on('pause', () => {
+            element.pause();
+        });
+
+        socket.on('playurl', (url) => {
+            element.src = url;
+            element.play();
+        });
+    </script>
+</body>

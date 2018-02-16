@@ -2,6 +2,19 @@
 # yarn lockfile v1
 
 
+CSSselect@0.x:
+  version "0.7.0"
+  resolved "https://registry.yarnpkg.com/CSSselect/-/CSSselect-0.7.0.tgz#e4054c67b467465f3c9500c0da0aa7878c4babd2"
+  dependencies:
+    CSSwhat "0.4"
+    boolbase "~1.0.0"
+    domutils "1.4"
+    nth-check "~1.0.0"
+
+CSSwhat@0.4:
+  version "0.4.7"
+  resolved "https://registry.yarnpkg.com/CSSwhat/-/CSSwhat-0.4.7.tgz#867da0ff39f778613242c44cfea83f0aa4ebdf9b"
+
 abbrev@1:
   version "1.1.1"
   resolved "https://registry.yarnpkg.com/abbrev/-/abbrev-1.1.1.tgz#f8f2c887ad10bf67f634f005b6987fed3179aac8"
@@ -187,6 +200,13 @@ arraybuffer.slice@0.0.6:
 arrify@^1.0.0:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/arrify/-/arrify-1.0.1.tgz#898508da2226f380df904728456849c1501a4b0d"
+
+ascli@latest:
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/ascli/-/ascli-1.0.1.tgz#bcfa5974a62f18e81cabaeb49732ab4a88f906bc"
+  dependencies:
+    colour "~0.7.1"
+    optjs "~3.2.2"
 
 asn1.js@^4.0.0:
   version "4.9.1"
@@ -869,6 +889,10 @@ body-parser@1.18.2:
     raw-body "2.3.2"
     type-is "~1.6.15"
 
+boolbase@~1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/boolbase/-/boolbase-1.0.0.tgz#68dff5fbe60c51eb37725ea9e3ed310dcc1e776e"
+
 boom@0.4.x:
   version "0.4.2"
   resolved "https://registry.yarnpkg.com/boom/-/boom-0.4.2.tgz#7a636e9ded4efcefb19cef4947a3c67dfaee911b"
@@ -991,6 +1015,12 @@ builtin-status-codes@^3.0.0:
   version "3.0.0"
   resolved "https://registry.yarnpkg.com/builtin-status-codes/-/builtin-status-codes-3.0.0.tgz#85982878e21b98e1c66425e03d0174788f569ee8"
 
+"bytebuffer@>=2.2 <3":
+  version "2.3.2"
+  resolved "https://registry.yarnpkg.com/bytebuffer/-/bytebuffer-2.3.2.tgz#41046123b56bbe8c6bec6c652244aa7169f27a44"
+  dependencies:
+    long "~1"
+
 bytes@3.0.0:
   version "3.0.0"
   resolved "https://registry.yarnpkg.com/bytes/-/bytes-3.0.0.tgz#d32815404d689699f85a4ea4fa8755dd13a96048"
@@ -1059,6 +1089,21 @@ chalk@^2.0.0, chalk@^2.1.0:
     ansi-styles "^3.1.0"
     escape-string-regexp "^1.0.5"
     supports-color "^4.0.0"
+
+cheerio-select@*:
+  version "0.0.3"
+  resolved "https://registry.yarnpkg.com/cheerio-select/-/cheerio-select-0.0.3.tgz#3f2420114f3ccb0b1b075c245ccfaae5d617a388"
+  dependencies:
+    CSSselect "0.x"
+
+cheerio@~0.10.5:
+  version "0.10.8"
+  resolved "https://registry.yarnpkg.com/cheerio/-/cheerio-0.10.8.tgz#ece5ad0c8baa9b9adc87394bbdb1c68bc4552ba0"
+  dependencies:
+    cheerio-select "*"
+    entities "0.x"
+    htmlparser2 "2.x"
+    underscore "~1.4"
 
 chokidar@^1.6.1, chokidar@^1.7.0:
   version "1.7.0"
@@ -1136,6 +1181,10 @@ color-name@^1.1.1:
   version "1.1.3"
   resolved "https://registry.yarnpkg.com/color-name/-/color-name-1.1.3.tgz#a7d0558bd89c42f795dd42328f740831ca53bc25"
 
+colour@~0.7.1:
+  version "0.7.1"
+  resolved "https://registry.yarnpkg.com/colour/-/colour-0.7.1.tgz#9cb169917ec5d12c0736d3e8685746df1cadf778"
+
 combined-stream@^1.0.5, combined-stream@~1.0.5:
   version "1.0.5"
   resolved "https://registry.yarnpkg.com/combined-stream/-/combined-stream-1.0.5.tgz#938370a57b4a51dea2c77c15d5c5fdf895164009"
@@ -1151,6 +1200,10 @@ combined-stream@~0.0.4, combined-stream@~0.0.5:
 commander@^2.11.0, commander@^2.9.0:
   version "2.11.0"
   resolved "https://registry.yarnpkg.com/commander/-/commander-2.11.0.tgz#157152fd1e7a6c8d98a5b715cf376df928004563"
+
+commander@~2.1.0:
+  version "2.1.0"
+  resolved "https://registry.yarnpkg.com/commander/-/commander-2.1.0.tgz#d121bbae860d9992a3d517ba96f56588e47c6781"
 
 commander@~2.8.1:
   version "2.8.1"
@@ -1233,6 +1286,10 @@ cookie-signature@1.0.6:
 cookie@0.3.1:
   version "0.3.1"
   resolved "https://registry.yarnpkg.com/cookie/-/cookie-0.3.1.tgz#e7e0a1f9ef43b4c8ba925c5c5a96e806d16873bb"
+
+cookiejar@1.3.0:
+  version "1.3.0"
+  resolved "https://registry.yarnpkg.com/cookiejar/-/cookiejar-1.3.0.tgz#dd00b35679021e99cbd4e855b9ad041913474765"
 
 core-js@^2.4.0, core-js@^2.5.0:
   version "2.5.1"
@@ -1352,6 +1409,10 @@ debug@3.1.0, debug@^3.0.1:
   resolved "https://registry.yarnpkg.com/debug/-/debug-3.1.0.tgz#5bb5a0672628b64149566ba16819e61518c67261"
   dependencies:
     ms "2.0.0"
+
+debug@~0.7.0:
+  version "0.7.4"
+  resolved "https://registry.yarnpkg.com/debug/-/debug-0.7.4.tgz#06e1ea8082c2cb14e39806e22e2f6f757f92af39"
 
 debug@~2.2.0:
   version "2.2.0"
@@ -1484,6 +1545,28 @@ domain-browser@^1.1.1:
   version "1.1.7"
   resolved "https://registry.yarnpkg.com/domain-browser/-/domain-browser-1.1.7.tgz#867aa4b093faa05f1de08c06f4d7b21fdf8698bc"
 
+domelementtype@1:
+  version "1.3.0"
+  resolved "https://registry.yarnpkg.com/domelementtype/-/domelementtype-1.3.0.tgz#b17aed82e8ab59e52dd9c19b1756e0fc187204c2"
+
+domhandler@2.0:
+  version "2.0.3"
+  resolved "https://registry.yarnpkg.com/domhandler/-/domhandler-2.0.3.tgz#889f8df626403af0788e29d66d5d5c6f7ebf0fd6"
+  dependencies:
+    domelementtype "1"
+
+domutils@1.0:
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/domutils/-/domutils-1.0.1.tgz#58b58d774774911556c16b8b02d99c609d987869"
+  dependencies:
+    domelementtype "1"
+
+domutils@1.4:
+  version "1.4.3"
+  resolved "https://registry.yarnpkg.com/domutils/-/domutils-1.4.3.tgz#0865513796c6b306031850e175516baf80b72a6f"
+  dependencies:
+    domelementtype "1"
+
 ecc-jsbn@~0.1.1:
   version "0.1.1"
   resolved "https://registry.yarnpkg.com/ecc-jsbn/-/ecc-jsbn-0.1.1.tgz#0fc73a9ed5f0d53c38193398523ef7e543777505"
@@ -1513,6 +1596,10 @@ elliptic@^6.0.0:
     inherits "^2.0.1"
     minimalistic-assert "^1.0.0"
     minimalistic-crypto-utils "^1.0.0"
+
+emitter-component@0.0.6:
+  version "0.0.6"
+  resolved "https://registry.yarnpkg.com/emitter-component/-/emitter-component-0.0.6.tgz#c155d82f6d0c01b5bee856d58074a4cc59795bca"
 
 emojis-list@^2.0.0:
   version "2.1.0"
@@ -1569,6 +1656,10 @@ enhanced-resolve@^3.4.0:
     memory-fs "^0.4.0"
     object-assign "^4.0.1"
     tapable "^0.2.7"
+
+entities@0.x:
+  version "0.5.0"
+  resolved "https://registry.yarnpkg.com/entities/-/entities-0.5.0.tgz#f611cb5ae221050e0012c66979503fd7ae19cc49"
 
 errno@^0.1.3:
   version "0.1.4"
@@ -1998,6 +2089,10 @@ form-data@~2.3.1:
     combined-stream "^1.0.5"
     mime-types "^2.1.12"
 
+formidable@1.0.9:
+  version "1.0.9"
+  resolved "https://registry.yarnpkg.com/formidable/-/formidable-1.0.9.tgz#419e3bccead3e8874d539f5b3e72a4c503b31a98"
+
 forwarded@~0.1.2:
   version "0.1.2"
   resolved "https://registry.yarnpkg.com/forwarded/-/forwarded-0.1.2.tgz#98c23dab1175657b8c0573e8ceccd91b0ff18c84"
@@ -2084,6 +2179,10 @@ gbxremote@~0.1.4:
 get-caller-file@^1.0.1:
   version "1.0.2"
   resolved "https://registry.yarnpkg.com/get-caller-file/-/get-caller-file-1.0.2.tgz#f702e63127e7e231c160a80c1554acb70d5047e5"
+
+get-spotify-client-credentials@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/get-spotify-client-credentials/-/get-spotify-client-credentials-1.0.0.tgz#13f3a45cc74915c995e8518c04300216c64becc7"
 
 get-stream@^3.0.0:
   version "3.0.0"
@@ -2285,6 +2384,14 @@ hosted-git-info@^2.1.4:
 html-entities@^1.1.3:
   version "1.2.1"
   resolved "https://registry.yarnpkg.com/html-entities/-/html-entities-1.2.1.tgz#0df29351f0721163515dfb9e5543e5f6eed5162f"
+
+htmlparser2@2.x:
+  version "2.6.0"
+  resolved "https://registry.yarnpkg.com/htmlparser2/-/htmlparser2-2.6.0.tgz#b28564ea9d1ba56a104ace6a7b0fdda2f315836f"
+  dependencies:
+    domelementtype "1"
+    domhandler "2.0"
+    domutils "1.0"
 
 http-errors@1.6.2, http-errors@~1.6.2:
   version "1.6.2"
@@ -2733,6 +2840,10 @@ long@^3.2.0:
   version "3.2.0"
   resolved "https://registry.yarnpkg.com/long/-/long-3.2.0.tgz#d821b7138ca1cb581c172990ef14db200b5c474b"
 
+long@~1:
+  version "1.2.3"
+  resolved "https://registry.yarnpkg.com/long/-/long-1.2.3.tgz#117fe2e2b1c453d83e322776c8d470639faa2b7f"
+
 long@~2.2.3:
   version "2.2.5"
   resolved "https://registry.yarnpkg.com/long/-/long-2.2.5.tgz#5a286b6f86ea81a28720d2702948fddc7d61310e"
@@ -2792,6 +2903,10 @@ merge-descriptors@1.0.1:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/merge-descriptors/-/merge-descriptors-1.0.1.tgz#b00aaa556dd8b44568150ec9d1b953f3f90cbb61"
 
+methods@0.0.1:
+  version "0.0.1"
+  resolved "https://registry.yarnpkg.com/methods/-/methods-0.0.1.tgz#277c90f8bef39709645a8371c51c3b6c648e068c"
+
 methods@~1.1.2:
   version "1.1.2"
   resolved "https://registry.yarnpkg.com/methods/-/methods-1.1.2.tgz#5529a4d67654134edcc5266656835b0f851afcee"
@@ -2844,6 +2959,10 @@ mime-types@~2.0.3:
   resolved "https://registry.yarnpkg.com/mime-types/-/mime-types-2.0.14.tgz#310e159db23e077f8bb22b748dabfa4957140aa6"
   dependencies:
     mime-db "~1.12.0"
+
+mime@1.2.5:
+  version "1.2.5"
+  resolved "https://registry.yarnpkg.com/mime/-/mime-1.2.5.tgz#9eed073022a8bf5e16c8566c6867b8832bfbfa13"
 
 mime@1.4.1:
   version "1.4.1"
@@ -2912,6 +3031,10 @@ mute-stream@0.0.7:
 nan@2, nan@^2.3.0, nan@^2.3.2, nan@^2.4.0:
   version "2.7.0"
   resolved "https://registry.yarnpkg.com/nan/-/nan-2.7.0.tgz#d95bf721ec877e08db276ed3fc6eb78f9083ad46"
+
+nan@~1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/nan/-/nan-1.0.0.tgz#ae24f8850818d662fcab5acf7f3b95bfaa2ccf38"
 
 natural-compare@^1.4.0:
   version "1.4.0"
@@ -2984,6 +3107,13 @@ node-pre-gyp@^0.6.36:
     tar "^2.2.1"
     tar-pack "^3.4.0"
 
+node-spotify-api@^1.0.7:
+  version "1.0.7"
+  resolved "https://registry.yarnpkg.com/node-spotify-api/-/node-spotify-api-1.0.7.tgz#09dd3088428fbf1d0ca4cdf6bbb2d1236bdaa934"
+  dependencies:
+    request "^2.81.0"
+    request-promise "^4.2.1"
+
 node-uuid@~1.4.0:
   version "1.4.8"
   resolved "https://registry.yarnpkg.com/node-uuid/-/node-uuid-1.4.8.tgz#b040eb0923968afabf8d32fb1f17f1167fdab907"
@@ -3024,6 +3154,12 @@ npmlog@^4.0.2:
     console-control-strings "~1.1.0"
     gauge "~2.7.3"
     set-blocking "~2.0.0"
+
+nth-check@~1.0.0:
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/nth-check/-/nth-check-1.0.1.tgz#9929acdf628fc2c41098deab82ac580cf149aae4"
+  dependencies:
+    boolbase "~1.0.0"
 
 number-is-nan@^1.0.0:
   version "1.0.1"
@@ -3086,6 +3222,14 @@ optionator@^0.8.2:
     prelude-ls "~1.1.2"
     type-check "~0.3.2"
     wordwrap "~1.0.0"
+
+options@>=0.0.5:
+  version "0.0.6"
+  resolved "https://registry.yarnpkg.com/options/-/options-0.0.6.tgz#ec22d312806bb53e731773e7cdaefcf1c643128f"
+
+optjs@~3.2.2:
+  version "3.2.2"
+  resolved "https://registry.yarnpkg.com/optjs/-/optjs-3.2.2.tgz#69a6ce89c442a44403141ad2f9b370bd5bb6f4ee"
 
 os-browserify@^0.2.0:
   version "0.2.1"
@@ -3317,6 +3461,17 @@ promise-request@^0.1.2:
   version "0.1.2"
   resolved "https://registry.yarnpkg.com/promise-request/-/promise-request-0.1.2.tgz#193895cde38e56c219667be28b6c78bfb99896bf"
 
+protobuf@~0.8.6:
+  version "0.8.8"
+  resolved "https://registry.yarnpkg.com/protobuf/-/protobuf-0.8.8.tgz#7f7447e915506ce4ca135a91b78931f4baa4b1d7"
+
+protobufjs@~2.0.0-rc2:
+  version "2.0.5"
+  resolved "https://registry.yarnpkg.com/protobufjs/-/protobufjs-2.0.5.tgz#7f351178c959b333d2327b773325ca4b2627a242"
+  dependencies:
+    ascli latest
+    bytebuffer ">=2.2 <3"
+
 proxy-addr@~2.0.2:
   version "2.0.2"
   resolved "https://registry.yarnpkg.com/proxy-addr/-/proxy-addr-2.0.2.tgz#6571504f47bb988ec8180253f85dd7e14952bdec"
@@ -3349,6 +3504,10 @@ punycode@1.3.2:
 punycode@^1.2.4, punycode@^1.4.1:
   version "1.4.1"
   resolved "https://registry.yarnpkg.com/punycode/-/punycode-1.4.1.tgz#c0d5a63b2718800ad8e1eb0fa5269c84dd41845e"
+
+qs@0.5.2:
+  version "0.5.2"
+  resolved "https://registry.yarnpkg.com/qs/-/qs-0.5.2.tgz#e5734acb7009fb918e800fd5c60c2f5b94a7ff43"
 
 qs@6.5.1, qs@~6.5.1:
   version "6.5.1"
@@ -3431,6 +3590,10 @@ readable-stream@^2.0.1, readable-stream@^2.0.2, readable-stream@^2.0.5, readable
     safe-buffer "~5.1.1"
     string_decoder "~1.0.3"
     util-deprecate "~1.0.1"
+
+readable-stream@~0.2.0:
+  version "0.2.0"
+  resolved "https://registry.yarnpkg.com/readable-stream/-/readable-stream-0.2.0.tgz#c237bf773b27acf9472a576435a9cb9b71504e0d"
 
 readable-stream@~1.0.2, readable-stream@~1.0.26:
   version "1.0.34"
@@ -3890,6 +4053,23 @@ spdx-license-ids@^1.0.2:
   version "1.2.2"
   resolved "https://registry.yarnpkg.com/spdx-license-ids/-/spdx-license-ids-1.2.2.tgz#c9df7a3424594ade6bd11900d596696dc06bac57"
 
+spotify-web@^1.3.0:
+  version "1.3.0"
+  resolved "https://registry.yarnpkg.com/spotify-web/-/spotify-web-1.3.0.tgz#824419a18ad986a8175e26529de9f3abffe9eed0"
+  dependencies:
+    cheerio "~0.10.5"
+    debug "~0.7.0"
+    protobufjs "~2.0.0-rc2"
+    readable-stream "~0.2.0"
+    superagent "~0.12.0"
+    ws "~0.4.25"
+  optionalDependencies:
+    protobuf "~0.8.6"
+
+spotify@^0.3.0:
+  version "0.3.0"
+  resolved "https://registry.yarnpkg.com/spotify/-/spotify-0.3.0.tgz#42b85105cfc30f174c050f2227c21a9d7edb1be4"
+
 sprintf-js@~1.0.2:
   version "1.0.3"
   resolved "https://registry.yarnpkg.com/sprintf-js/-/sprintf-js-1.0.3.tgz#04e6926f662895354f3dd015203633b857297e2c"
@@ -3990,6 +4170,17 @@ strip-json-comments@~2.0.1:
   version "2.0.1"
   resolved "https://registry.yarnpkg.com/strip-json-comments/-/strip-json-comments-2.0.1.tgz#3c531942e908c2697c0ec344858c286c7ca0a60a"
 
+superagent@~0.12.0:
+  version "0.12.4"
+  resolved "https://registry.yarnpkg.com/superagent/-/superagent-0.12.4.tgz#01e721d0b3d4dc44da22cd70c19c8575954016b0"
+  dependencies:
+    cookiejar "1.3.0"
+    emitter-component "0.0.6"
+    formidable "1.0.9"
+    methods "0.0.1"
+    mime "1.2.5"
+    qs "0.5.2"
+
 supports-color@^2.0.0:
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/supports-color/-/supports-color-2.0.0.tgz#535d045ce6b6363fa40117084629995e9df324c7"
@@ -4057,6 +4248,10 @@ timers-browserify@^2.0.2:
   resolved "https://registry.yarnpkg.com/timers-browserify/-/timers-browserify-2.0.4.tgz#96ca53f4b794a5e7c0e1bd7cc88a372298fa01e6"
   dependencies:
     setimmediate "^1.0.4"
+
+tinycolor@0.x:
+  version "0.0.1"
+  resolved "https://registry.yarnpkg.com/tinycolor/-/tinycolor-0.0.1.tgz#320b5a52d83abb5978d81a3e887d4aefb15a6164"
 
 tmp@^0.0.33:
   version "0.0.33"
@@ -4171,6 +4366,10 @@ underscore@, underscore@>=1.3.1, underscore@~1.8.3:
 underscore@1.6.0, underscore@~1.6.0:
   version "1.6.0"
   resolved "https://registry.yarnpkg.com/underscore/-/underscore-1.6.0.tgz#8b38b10cacdef63337b8b24e4ff86d45aea529a8"
+
+underscore@~1.4:
+  version "1.4.4"
+  resolved "https://registry.yarnpkg.com/underscore/-/underscore-1.4.4.tgz#61a6a32010622afa07963bf325203cf12239d604"
 
 unpipe@1.0.0, unpipe@~1.0.0:
   version "1.0.0"
@@ -4376,6 +4575,15 @@ ws@^4.0.0:
     async-limiter "~1.0.0"
     safe-buffer "~5.1.0"
     ultron "~1.1.0"
+
+ws@~0.4.25:
+  version "0.4.32"
+  resolved "https://registry.yarnpkg.com/ws/-/ws-0.4.32.tgz#787a6154414f3c99ed83c5772153b20feb0cec32"
+  dependencies:
+    commander "~2.1.0"
+    nan "~1.0.0"
+    options ">=0.0.5"
+    tinycolor "0.x"
 
 xmlbuilder@0.3.1:
   version "0.3.1"

@@ -2,31 +2,40 @@ import config from 'config';
 import debug from 'debug';
 import Discord from 'discord.js';
 
+import Voice from './voice';
+import Messages from './messages';
+import Player from './player';
+
 const log = debug('skeets:service:discord');
 const bot = new Discord.Client();
 
 export default async (app) => {
+    let voiceService, messageService, playerService;
+
     const handleVoiceConnections = () => {
         setTimeout(async () => {
             log('Connecting to voice channels');
 
-            const voice = app.service('discordVoice');
             const guilds = config.get('guilds');
 
             for (const id in guilds) {
                 const channel = await bot.channels.get(guilds[id].voice);
 
-                voice.joinChannel(channel);
+                voiceService.joinChannel(channel);
             }
         }, 5 * 1000);
     };
 
     const attachHandlers = () => {
-        bot.on('ready', () => {
-            log('Service is ready!');
+        bot.on('ready', async () => {
+            log('Service Started!');
 
             // bot.user.setUsername(config.get('bot.name'));
             // bot.user.setAvatar(config.get('bot.avatar'));
+
+            voiceService = await Voice(app, bot);
+            messageService = await Messages(app, bot);
+            playerService = await Player(app, voiceService, messageService);
 
             handleVoiceConnections();
         });
@@ -36,7 +45,7 @@ export default async (app) => {
                 return;
             }
 
-            app.service('messages').handle(message);
+            messageService.handle(message);
         });
 
         bot.on('messageReactionAdd', (reaction, user) => {
@@ -46,7 +55,7 @@ export default async (app) => {
 
             log(`Received reaction on ${reaction.message.id} from ${user.id}`);
 
-            app.service('player').handleReaction(reaction, user);
+            playerService.handleReaction(reaction, user);
         });
     };
 

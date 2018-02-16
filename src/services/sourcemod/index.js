@@ -3,25 +3,28 @@ import debug from 'debug';
 import actions from './actions';
 import router from './router';
 
+import ClientClass from './objects/Client';
+import RoomClass from './objects/Room';
+
 const log = debug('skeets:service:sourcemod');
 
-const clients = {};
-
 export default (app) => {
-    actions(app);
-
     setTimeout(() => {
         const connection = app.service('connection');
         const express = connection.express;
+        const models = {
+            Client: ClientClass(app),
+            Room: RoomClass(app)
+        };
 
-        express.use('/api/sourcemod', router(app));
+        express.use('/api/sourcemod', router(app, models));
 
-        log('Started service');
+        connection.addViewPath(`${__dirname}/views`);
+
+        actions(app, models);
+
+        log('Started service!');
     }, 5000);
 
-    const getSocketByID = id => clients[id].socket;
-
-    return {
-        getSocketByID
-    };
+    return {};
 };

@@ -24,5 +24,24 @@ export default app => {
         }
     });
 
+    router.get('/spotify', async (req, res) => {
+        try {
+            if (!req.query.id)
+                throw new Error('No URL or ID supplied');
+
+            let id = req.query.id;
+
+            log(id);
+
+            const stream = await app.service('spotify').getStream(id);
+
+            stream.pipe(res);
+        } catch (error) {
+            log(error);
+
+            return res.sendStatus(404);
+        }
+    });
+
     return router;
 }

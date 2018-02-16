@@ -1,9 +1,6 @@
-import fs from 'fs';
 import debug from 'debug';
 import config from 'config';
 import moment from 'moment';
-import url from 'valid-url';
-import ytdl from 'ytdl-core';
 
 const log = debug('skeets:service:player');
 
@@ -16,7 +13,7 @@ const cacheInfo = {};
 const guildSettings = {};
 const streamOptions = { seek: 0, volume: 0.5, passes: 3 };
 
-export default async (app) => {
+export default async (app, voiceService, messageService) => {
     app.registerCommand('play', {
         guildOnly: true,
     }, (data) => playCommand(data));
@@ -38,15 +35,15 @@ export default async (app) => {
         const guild = message.guild.id;
 
         if (!message.guild) {
-            return await app.service('messages').sendErrorMessage(app.service('reply').getReply('common.error.onlyGuild'), message);
+            return await messageService.sendErrorMessage(app.service('reply').getReply('common.error.onlyGuild'), message);
         }
 
         if (!message.member.voiceChannelID) {
-            return await app.service('messages').sendErrorMessage(app.service('reply').getReply('voice.error.notInVoiceChannel'), message);
+            return await messageService.sendErrorMessage(app.service('reply').getReply('voice.error.notInVoiceChannel'), message);
         }
 
         if (players[guild] && getPlayerConnection(guild) && message.member.voiceChannelID !== getPlayerConnection(guild).channel.id) {
-            return await app.service('messages').sendErrorMessage(app.service('reply').getReply('voice.error.notInSameVoiceChannel'), message);
+            return await messageService.sendErrorMessage(app.service('reply').getReply('voice.error.notInSameVoiceChannel'), message);
         }
 
         channels[message.guild.id] = message.channel.id;
@@ -71,7 +68,7 @@ export default async (app) => {
         const guildID = message.guild.id;
 
         if (!entities.search_query) {
-            await app.service('messages').sendErrorMessage(app.service('reply').getReply('common.error.failure'), message);
+            await messageService.sendErrorMessage(app.service('reply').getReply('common.error.failure'), message);
         }
 
         log(`Searching for '${entities.search_query}'`);
@@ -80,7 +77,7 @@ export default async (app) => {
             const result = await app.service('youtube').search(entities.search_query);
 
             if (result.items.length < 0) {
-                await app.service('messages').sendErrorMessage(app.service('reply').getReply('player.error.noResult'), message);
+                await messageService.sendErrorMessage(app.service('reply').getReply('player.error.noResult'), message);
             }
 
             log(`Found ${result.items.length} results for ${entities.search_query}`);
@@ -91,13 +88,13 @@ export default async (app) => {
             const user = message.author.username;
             const text = app.service('reply').getReply('chat.acknowledge');
             const reply = app.service('reply').processReply.name(text, user);
-            await app.service('messages').sendSuccessMessage(reply, message);
+            await messageService.sendSuccessMessage(reply, message);
 
             await queue(guildID, videoID);
         } catch (error) {
             log(error);
 
-            await app.service('messages').sendErrorMessage(app.service('reply').getReply('common.error.failure'), message);
+            await messageService.sendErrorMessage(app.service('reply').getReply('common.error.failure'), message);
 
             throw new Error(error);
         }
@@ -109,7 +106,7 @@ export default async (app) => {
         const guild = message.guild.id;
 
         if (!entities.url) {
-            await app.service('messages').sendErrorMessage(app.service('reply').getReply('common.error.failure'), message);
+            await messageService.sendErrorMessage(app.service('reply').getReply('common.error.failure'), message);
         }
 
         log(entities.url);
@@ -120,7 +117,7 @@ export default async (app) => {
             const user = message.author.username;
             const text = app.service('reply').getReply('chat.acknowledge');
             const reply = app.service('reply').processReply.name(text, user);
-            await app.service('messages').sendSuccessMessage(reply, message);
+            await messageService.sendSuccessMessage(reply, message);
 
             for (const url of urls) {
                 if (checkIfPlaylist(url)) {
@@ -169,7 +166,7 @@ export default async (app) => {
         } catch (error) {
             log(error);
 
-            await app.service('messages').sendErrorMessage(app.service('reply').getReply('common.error.failure'), message);
+            await messageService.sendErrorMessage(app.service('reply').getReply('common.error.failure'), message);
 
             throw new Error(error);
         }
@@ -187,7 +184,7 @@ export default async (app) => {
 
         if (!options.noAnnouce) {
             const text = `Added ${items.length} songs from playlist`;
-            await app.service('messages').sendInfoMessage(text, getGuildChannel(guild));
+            await messageService.sendInfoMessage(text, getGuildMessage(guild));
         }
 
         return info.nextPageToken;
@@ -195,47 +192,47 @@ export default async (app) => {
 
     const playCommand = async (guild, options = {}) => {
         if (!players[guild]) {
-            return await app.service('messages').sendInfoMessage(app.service('reply').getReply('player.error.noPlaylist'), getGuildChannel(guild));
+            return await messageService.sendInfoMessage(app.service('reply').getReply('player.error.noPlaylist'), getGuildMessage(guild));
         }
 
         const status = getPlayerStatus(guild);
 
         if (status === 'stopped') {
-            await app.service('messages').sendInfoMessage(app.service('reply').getReply('player.error.noSong'), getGuildChannel(guild));
+            await messageService.sendInfoMessage(app.service('reply').getReply('player.error.noSong'), getGuildMessage(guild));
         } else if (status === 'playing') {
-            await app.service('messages').sendInfoMessage(app.service('reply').getReply('player.error.alreadyPlaying'), getGuildChannel(guild));
+            await messageService.sendInfoMessage(app.service('reply').getReply('player.error.alreadyPlaying'), getGuildMessage(guild));
         } else if (status === 'paused') {
             getPlayerDispatcher(guild).resume();
             setPlayerStatus(guild, 'playing');
 
             if (!options.noAnnouce)
-                await app.service('messages').sendInfoMessage(app.service('reply').getReply('player.info.resume'), getGuildChannel(guild));
+                await messageService.sendInfoMessage(app.service('reply').getReply('player.info.resume'), getGuildMessage(guild));
         }
     };
 
     const pauseCommand = async (guild, options = {}) => {
         if (!players[guild]) {
-            return await app.service('messages').sendInfoMessage(app.service('reply').getReply('player.error.noPlaylist'), getGuildChannel(guild));
+            return await messageService.sendInfoMessage(app.service('reply').getReply('player.error.noPlaylist'), getGuildMessage(guild));
         }
 
         const status = getPlayerStatus(guild);
 
         if (status === 'stopped') {
-            await app.service('messages').sendInfoMessage(app.service('reply').getReply('player.error.noSong'), getGuildChannel(guild));
+            await messageService.sendInfoMessage(app.service('reply').getReply('player.error.noSong'), getGuildMessage(guild));
         } else if (status === 'paused') {
-            await app.service('messages').sendInfoMessage(app.service('reply').getReply('player.error.alreadyPaused'), getGuildChannel(guild));
+            await messageService.sendInfoMessage(app.service('reply').getReply('player.error.alreadyPaused'), getGuildMessage(guild));
         } else if (status === 'playing') {
             getPlayerDispatcher(guild).pause();
             setPlayerStatus(guild, 'paused');
 
             if (!options.noAnnouce)
-                await app.service('messages').sendInfoMessage(app.service('reply').getReply('player.info.paused'), getGuildChannel(guild));
+                await messageService.sendInfoMessage(app.service('reply').getReply('player.info.paused'), getGuildMessage(guild));
         }
     };
 
     const stopCommand = async (guild) => {
         if (!players[guild]) {
-            return await app.service('messages').sendInfoMessage(app.service('reply').getReply('player.error.noPlaylist'), getGuildChannel(guild));
+            return await messageService.sendInfoMessage(app.service('reply').getReply('player.error.noPlaylist'), getGuildMessage(guild));
         }
 
         log(`Current player status ${getPlayerStatus(guild)}`);
@@ -243,7 +240,7 @@ export default async (app) => {
         getPlayerDispatcher(guild).end('stop');
         setPlayerStatus(guild, 'stopped');
 
-        await app.service('messages').sendInfoMessage(app.service('reply').getReply('player.info.stopped'), getGuildChannel(guild));
+        await messageService.sendInfoMessage(app.service('reply').getReply('player.info.stopped'), getGuildMessage(guild));
 
         delete players[guild];
         delete playerMessages[guild];
@@ -251,16 +248,16 @@ export default async (app) => {
 
     const infoCommand = async (guild, options = {}) => {
         if (!players[guild]) {
-            return await app.service('messages').sendInfoMessage(app.service('reply').getReply('player.error.noPlaylist'), getGuildChannel(guild));
+            return await messageService.sendInfoMessage(app.service('reply').getReply('player.error.noPlaylist'), getGuildMessage(guild));
         }
 
         const message = await infoMessage(guild, options);
-        const messages = await channelObj[guild].fetchMessages({ limit: 1 });
+        const messages = await getGuildMessage(guild).channel.fetchMessages({ limit: 1 });
 
         if (playerMessages[guild] && messages.first().id === playerMessages[guild].id) {
             playerMessages[guild].edit('', message);
         } else {
-            playerMessages[guild] = await app.service('messages').sendMessage('', getGuildChannel(guild), message);
+            playerMessages[guild] = await messageService.sendMessage('', getGuildMessage(guild), message);
         }
 
         log(messages.first().id);
@@ -351,7 +348,7 @@ export default async (app) => {
 
     const playlistCommand = async (guild) => {
         if (!players[guild]) {
-            return await app.service('messages').sendInfoMessage(app.service('reply').getReply('player.error.noPlaylist'), getGuildChannel(guild));
+            return await messageService.sendInfoMessage(app.service('reply').getReply('player.error.noPlaylist'), getGuildMessage(guild));
         }
 
         const index = getPlayerIndex(guild);
@@ -391,7 +388,7 @@ export default async (app) => {
             }
         };
 
-        await app.service('messages').sendMessage('', getGuildChannel(guild), {
+        await messageService.sendMessage('', getGuildMessage(guild), {
             embed
         });
     };
@@ -400,7 +397,7 @@ export default async (app) => {
         if (!options.noAnnouce) {
             const info = await app.service('youtube').getInfo(id);
             const text = `Added ** [${info.title}](${info.video_url}) ** by ** [${info.author.name}](${info.author.channel_url}) ** to the playlist`;
-            await app.service('messages').sendInfoMessage(text, getGuildChannel(guild));
+            await messageService.sendInfoMessage(text, getGuildMessage(guild));
         }
 
         if (players[guild]) {
@@ -422,7 +419,7 @@ export default async (app) => {
 
     const playNext = async (guild) => {
         if (!players[guild]) {
-            return await app.service('messages').sendInfoMessage(app.service('reply').getReply('player.error.noPlaylist'), getGuildChannel(guild));
+            return await messageService.sendInfoMessage(app.service('reply').getReply('player.error.noPlaylist'), getGuildMessage(guild));
         }
 
         const index = getPlayerIndex(guild) + 1;
@@ -441,13 +438,13 @@ export default async (app) => {
             setPlayerIndex(guild, -1);
             return playNext(guild);
         } else {
-            await app.service('messages').sendInfoMessage(app.service('reply').getReply('player.info.playlistLast'), getGuildChannel(guild));
+            await messageService.sendInfoMessage(app.service('reply').getReply('player.info.playlistLast'), getGuildMessage(guild));
         }
     };
 
     const playPrevious = async (guild) => {
         if (!players[guild]) {
-            return await app.service('messages').sendInfoMessage(app.service('reply').getReply('player.error.noPlaylist'), getGuildChannel(guild));
+            return await messageService.sendInfoMessage(app.service('reply').getReply('player.error.noPlaylist'), getGuildMessage(guild));
         }
 
         let index;
@@ -466,7 +463,7 @@ export default async (app) => {
             play(guild, song);
             setPlayerIndex(guild, index);
         } else {
-            await app.service('messages').sendInfoMessage(app.service('reply').getReply('player.info.playlistFirst'), getGuildChannel(guild));
+            await messageService.sendInfoMessage(app.service('reply').getReply('player.info.playlistFirst'), getGuildMessage(guild));
         }
     };
 
@@ -508,29 +505,28 @@ export default async (app) => {
     };
 
     const createPlayer = async (guild) => {
-        const voice = app.service('discordVoice');
         const player = {};
         const message = getGuildMessage(guild);
 
-        let voiceConnection = await voice.getConnection(guild);
+        let voiceConnection = await voiceService.getConnection(guild);
 
         if (!voiceConnection) {
             log('Bot is not connected to any voice channel');
 
             if (message.member.voiceChannelID) {
                 voiceConnection = await app.service('discordVoice').joinChannel(message.member.voiceChannel);
-                await app.service('messages').sendInfoMessage(app.service('reply').getReply('voice.info.connected'), getGuildChannel(guild));
+                await messageService.sendInfoMessage(app.service('reply').getReply('voice.info.connected'), getGuildMessage(guild));
             } else {
-                await app.service('messages').sendErrorMessage(app.service('reply').getReply('voice.error.notInVoiceChannel'), getGuildChannel(guild));
+                await messageService.sendErrorMessage(app.service('reply').getReply('voice.error.notInVoiceChannel'), getGuildMessage(guild));
             }
         } else if (voiceConnection && message.member.voiceChannelID !== voiceConnection.channel.id) {
             log('Bot is not in same voice channel');
 
             if (message.member.voiceChannelID) {
                 voiceConnection = await app.service('discordVoice').joinChannel(message.member.voiceChannel);
-                await app.service('messages').sendInfoMessage(app.service('reply').getReply('voice.info.connected'), getGuildChannel(guild));
+                await messageService.sendInfoMessage(app.service('reply').getReply('voice.info.connected'), getGuildMessage(guild));
             } else {
-                await app.service('messages').sendErrorMessage(app.service('reply').getReply('voice.error.notInSameVoiceChannel'), getGuildChannel(guild));
+                await messageService.sendErrorMessage(app.service('reply').getReply('voice.error.notInSameVoiceChannel'), getGuildMessage(guild));
             }
         }
 
@@ -551,9 +547,9 @@ export default async (app) => {
 
         if (!options.noAnnouce) {
             if (guildSettings[guild].repeat)
-                await app.service('messages').sendErrorMessage(app.service('reply').getReply('player.info.repeat.on'), getGuildChannel(guild));
+                await messageService.sendErrorMessage(app.service('reply').getReply('player.info.repeat.on'), getGuildMessage(guild));
             else
-                await app.service('messages').sendErrorMessage(app.service('reply').getReply('player.info.repeat.off'), getGuildChannel(guild));
+                await messageService.sendErrorMessage(app.service('reply').getReply('player.info.repeat.off'), getGuildMessage(guild));
         }
 
         if (!playerMessages[guild]) return;
@@ -622,7 +618,6 @@ export default async (app) => {
 
     const checkIfPlaylist = async url => url.indexOf('list') > 0;
 
-    const getGuildChannel = (guild) => channels[guild];
     const getGuildMessage = (guild) => messages[guild];
 
     const addToPlaylist = (guild, id) => players[guild].playlist.push(id);
@@ -638,6 +633,8 @@ export default async (app) => {
     const setPlayerDispatcher = (guild, dispatcher) => players[guild].dispatcher = dispatcher;
     const setPlayerIndex = (guild, index) => players[guild].index = index;
 
+    log('Service Started!');
+
     return {
         handleReaction: async (reaction, user) => {
             const message = reaction.message;
@@ -647,7 +644,7 @@ export default async (app) => {
             if (playerMessages[guild].id !== message.id) return;
 
             if (!message.guild) {
-                return await app.service('messages').sendErrorMessage(app.service('reply').getReply('common.error.onlyGuild'), message);
+                return await messageService.sendErrorMessage(app.service('reply').getReply('common.error.onlyGuild'), message);
             }
 
             if (react.toString() === '⏮') {

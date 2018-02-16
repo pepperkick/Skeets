@@ -1,40 +1,50 @@
 import Express from 'express';
 import debug from 'debug';
-import urlval from 'valid-url';
+import request from 'request-promise';
+
+import MessageService from './messages';
 
 const router = Express.Router();
 const log = debug('skeets:service:sourcemod');
-const clients = {};
 
-export default app => {
+export default (app, models) => {
     const connection = app.service('connection');
-    const socket = connection.socket;
+    const Socket = connection.socket;
+    const Client = models.Client;
+    const Room = models.Room;
+    const messageService = MessageService(app);
 
-    socket.on('connection', (client) => {
-        let author;
+    const setClientLocation = (id, server) => {
+        if (Client.get(id)) {
+            Client.get(id).location = server;
+        }
+    };
 
-        client.on('auth', (id) => {
-            clients[id].socket = client;
+    const filterIP = (ip, final) => {
+        if (!ip)
+            return final;
 
-            author = id;
+        if (ip === 'localhost' || ip === '127.0.0.1') {
+            return final;
+        }
 
-            client.emit('playurl', `http://chillypunch.com:7587/api/yt?id=${clients[id].videoID}`)
+        return ip;
+    };
 
-            log(`Socket Client Connected as ${id}`);
-        });
+    Socket.on('connection', (socket) => {
+        socket.on('auth', (id) => {
+            try {
+                const client = Client.get(id);
+                client.socket = socket;
 
-        client.on('played', (data) => {
-            if (!author) return log('Client not authenticated');
+                if (client.room) {
+                    client.room.join(client);
+                }
 
-            clients[author].played = Math.floor(data.time);
-            clients[author].id = data.id;
-        });
-
-        client.on('play', (data) => {
-            if (!author) return log('Client not authenticated');
-
-            clients[author].played = Math.floor(data.time);
-            clients[author].id = data.id;
+                log(`Socket Client Connected: ${id}`);
+            } catch (error) {
+                log(error);
+            }
         });
 
         log('Socket Client Connected');
@@ -43,24 +53,30 @@ export default app => {
     router.get('/action', async (req, res) => {
         const action = req.query.action;
         const author = req.query.author;
-        const client = req.query.client;
-        const port = req.query.port;
-        let ip = req.query.ip;
+        const server = {
+            client: req.query.client,
+            port: req.query.port,
+            ip: filterIP(req.query.ip, req.connection.remoteAddress.replace(/^.*:/, ''))
+        };
 
         log(`Command ${action} by ${author}`);
 
-        if (ip === 'localhost' || ip === '127.0.0.1') {
-            ip = req.connection.remoteAddress.replace(/^.*:/, '');
-        }
+        setClientLocation(author, server);
 
         const data = {
             author,
-            server: {
-                ip,
-                port,
-                client
-            }
+            server
         };
+
+        if (action === 'music.query') {
+            log(`Search for ${req.query.search} from ${author}`);
+
+            if (req.query.search) {
+                data.query = req.query.search;
+            } else {
+                throw new Error('Music query was called without search query');
+            }
+        }
 
         app.callAction('sourcemod', action, data);
 
@@ -71,21 +87,17 @@ export default app => {
         try {
             const text = req.query.message;
             const author = req.query.author;
-            const client = req.query.client;
-            const port = req.query.port;
-            let ip = req.query.ip;
+            const server = {
+                client: req.query.client,
+                port: req.query.port,
+                ip: filterIP(req.query.ip, req.connection.remoteAddress.replace(/^.*:/, ''))
+            };
 
             log(`Message ${text} by ${author}`);
 
-            if (ip === 'localhost' || ip === '127.0.0.1') {
-                ip = req.connection.remoteAddress.replace(/^.*:/, '');
-            }
+            setClientLocation(author, server);
 
-            app.service('messages').handleSourcemod(text, author, {
-                ip,
-                port,
-                client
-            });
+            messageService.handle(text, author, server);
 
             res.send('OK');
         } catch (error) {
@@ -93,43 +105,77 @@ export default app => {
         }
     });
 
-    router.get('/play', async (req, res) => {
+    router.get('/connect', async (req, res) => {
         try {
-            if (!req.query.part)
-                throw new Error('No URL or ID supplied');
+            if (!req.query.id)
+                throw new Error('No ID supplied');
 
-            if (!req.query.author)
-                throw new Error('No author ID supplied');
+            const server = {
+                client: req.query.client,
+                port: req.query.port,
+                ip: filterIP(req.query.ip, req.connection.remoteAddress.replace(/^.*:/, ''))
+            };
 
-            let videoID;
+            const id = req.query.id;
 
-            if (urlval.isUri(req.query.part)) {
-                const url = req.query.part;
+            Client.create(id);
+            setClientLocation(id, server);
 
-                let parts = url.split('v=')[1];
-                parts = parts != undefined ? parts : url.split('youtu.be/')[1];
+            log(`Serving to ${id}`);
 
-                videoID = parts.split('&')[0];
+            res.render('play', { id });
+
+            const text = 'Connected!';
+            await request(`http://${server.ip}:${server.port}/skeets/chat_client?type=1&text=${text}&client=${server.client}`);
+        } catch (error) {
+            log(error);
+        }
+    });
+
+    router.get('/room', async (req, res) => {
+        try {
+            if (!req.query.id)
+                throw new Error('No ID supplied');
+
+            const server = {
+                client: req.query.client,
+                port: req.query.port,
+                ip: filterIP(req.query.ip, req.connection.remoteAddress.replace(/^.*:/, ''))
+            };
+
+            const id = req.query.id;
+
+            const client = Client.create(id);
+            setClientLocation(id, server);
+
+            if (req.query.room) {
+                const room = Room.get(req.query.room);
+                client.room = room;
+
+                const text = `Connected to room with id ${room.id}!`;
+                await request(`http://${server.ip}:${server.port}/skeets/chat_client?type=1&text=${text}&client=${server.client}`);
             } else {
-                videoID = req.query.part;
+                let text;
+
+                if (client.room) {
+                    text = 'You are already in a roomm use !stop to leave';
+                } else {
+                    const room = Room.create(client);
+                    client.room = room;
+                    text = `Created room with id ${room.id}!`;
+                }
+
+                await request(`http://${server.ip}:${server.port}/skeets/chat_client?type=1&text=${text}&client=${server.client}`);
             }
 
-            const author = req.query.author;
+            res.render('play', { id });
 
-            if (clients[author])
-                clients[author].videoID = videoID;
-            else
-                clients[author] = { videoID };
+            log(`Creating to ${id}`);
 
-            log(`Serving to ${author}`);
-
-            res.render('play', {
-                author
-            });
         } catch (error) {
             log(error);
         }
     });
 
     return router;
-}
+};

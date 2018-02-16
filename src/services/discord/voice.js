@@ -1,10 +1,13 @@
 import debug from 'debug';
 
-const log = debug('skeets:service:discord-voice');
+const log = debug('skeets:service:discord:voice');
 
 const connectionBank = {};
 
-export default async (app) => {
+export default async (app, discord) => {
+    const message = app.service('messages');
+    const reply = app.service('reply');
+
     app.registerAction('discord', 'bot.join', (data) => botJoin(data));
     app.registerCommand('join', (data) => botJoin(data));
 
@@ -12,16 +15,16 @@ export default async (app) => {
         const member = data.message.member;
 
         if (!data.message.guild) {
-            return await app.service('messages').sendErrorMessage(app.service('reply').getReply('common.error.onlyGuild'), data.message);
+            return await message.sendErrorMessage(reply.getReply('common.error.onlyGuild'), data.message);
         }
 
         if (!member.voiceChannel) {
-            return await app.service('messages').sendErrorMessage(app.service('reply').getReply('voice.error.notInVoiceChannel'), data.message);
+            return await message.sendErrorMessage(reply.getReply('voice.error.notInVoiceChannel'), data.message);
         }
 
         await joinChannel(member.voiceChannel);
 
-        app.service('messages').sendInfoMessage(app.service('reply').getReply('voice.info.connected'), data.message);
+        message.sendInfoMessage(reply.getReply('voice.info.connected'), data.message);
     };
 
     const pushToBank = (guild, connection) => {
@@ -49,7 +52,7 @@ export default async (app) => {
                 throw new Error(`Channel ${channel.id} is not a voice channel`);
             }
         } else {
-            channel = app.service('discord').channels.get(channel);
+            channel = discord.channels.get(channel);
         }
 
         try {
@@ -67,13 +70,11 @@ export default async (app) => {
         }
     };
 
-    try {
-        return {
-            joinChannel,
-            getConnection: (guild) => connectionBank[guild].connection,
-            getReceiver: (guild) => connectionBank[guild].receiver,
-        };
-    } catch (error) {
-        log(error);
-    }
+    log('Service Started!');
+
+    return {
+        joinChannel,
+        getConnection: (guild) => connectionBank[guild].connection,
+        getReceiver: (guild) => connectionBank[guild].receiver,
+    };
 };

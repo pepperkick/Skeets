@@ -14,11 +14,18 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.4/socket.io.slim.js"></script>
     <script>
         var element = document.getElementById("audio");
-        var socket = io('chillypunch.com:7587');
+        var socket = io('chillypunch.com:7587', {
+            'reconnection': true,
+            'reconnectionDelay': 1000,
+            'reconnectionDelayMax' : 5000,
+            'reconnectionAttempts': 100
+        });
 
-        socket.emit('auth', '<%= author %>');
+        socket.on('connect', () => {
+            socket.emit('auth', '<%= id %>');
+        });
 
-        socket.on('play', () => {
+        socket.on('resume', () => {
             element.play();
         });
 
@@ -26,9 +33,18 @@
             element.pause();
         });
 
+        socket.on('stop', () => {
+            element.pause();
+            element.src = '';
+        });
+
         socket.on('playurl', (url) => {
             element.src = url;
             element.play();
         });
+
+        element.onended = () => {
+            socket.emit('end');
+        };
     </script>
 </body>

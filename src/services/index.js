@@ -1,17 +1,15 @@
 import debug from 'debug';
 
 import discord from './discord';
-import discordVoice from './discord-voice';
 import reply from './reply';
 import file from './file';
-import messages from './messages';
 import dialogflow from './dialogflow';
-import player from './player';
 import lastfm from './lastfm';
 import youtube from './youtube';
 import cleverbot from './cleverbot';
 import connection from './connection';
 import sourcemod from './sourcemod';
+import models from './models';
 
 const log = debug('skeets:services');
 
@@ -47,18 +45,16 @@ export default async (app) => {
     };
 
     const services = {
-        discordVoice: await discordVoice(app),
         discord: await discord(app),
         reply: await reply(app),
         file: await file(app),
-        messages: await messages(app),
         dialogflow: await dialogflow(app),
         youtube: await youtube(app),
         lastfm: await lastfm(app),
-        player: await player(app),
         cleverbot: await cleverbot(app),
         connection: await connection(app),
-        sourcemod: await sourcemod(app)
+        sourcemod: await sourcemod(app),
+        models
     };
 
     services.file.clean();

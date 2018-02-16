@@ -10,16 +10,16 @@ const express = new Express();
 const server = Server.createServer(express);
 const socket = new Socket(server);
 const log = debug('skeets:service:connection');
+const viewPaths = [];
 
 export default (app) => {
     express.enable('trust proxy');
     express.set('view engine', 'ejs');
-    express.set('views', `${__dirname}/views`);
 
     express.use('/api', apiRouter(app));
 
     server.listen(config.get('service.connection.port'), () => {
-        log('Service started!');
+        log('Service Started!');
     });
 
     const connInfo = {
@@ -27,7 +27,14 @@ export default (app) => {
         port: config.get('service.connection.port')
     };
 
+    const addViewPath = (path) => {
+        viewPaths.push(path);
+
+        express.set('views', viewPaths);
+    };
+
     return {
+        addViewPath,
         connInfo,
         express,
         socket

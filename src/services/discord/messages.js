@@ -1,15 +1,17 @@
 import config from 'config';
 import debug from 'debug';
 
-const log = debug('skeets:service:messages');
+const log = debug('skeets:service:discord:messages');
 const msgBank = {};
 
 export default (app) => {
+    const replyService = app.service('reply');
+
     app.registerAction('discord', 'chat.greet', async data => {
         const message = data.message;
         const user = message.author.username;
-        const text = app.service('reply').getReply('chat.greet');
-        const reply = app.service('reply').processReply.name(text, user);
+        const text = replyService.getReply('chat.greet');
+        const reply = replyService.processReply.name(text, user);
 
         await sendMessage(reply, message, true);
     });
@@ -17,8 +19,8 @@ export default (app) => {
     app.registerAction('discord', 'default', async data => {
         const message = data.message;
         const user = message.author.username;
-        const text = app.service('reply').getReply('chat.fail');
-        const reply = app.service('reply').processReply.name(text, user);
+        const text = replyService.getReply('chat.fail');
+        const reply = replyService.processReply.name(text, user);
 
         await sendErrorMessage(reply, message, true);
     });
@@ -65,24 +67,13 @@ export default (app) => {
     };
 
     const sendMessage = async (text, message, options = {}) => {
-        let session;
-        let channel;
-        let guild;
-
-        if (message instanceof Object) {
-            session = message.author.id;
-            channel = message.channel;
-            guild = message.guild;
-        } else {
-            session = app.service('discord').user.id;
-            channel = app.service('discord').channels.get(message);
-            guild = channel.guild;
-        }
+        const channel = message.channel;
+        const guild = message.guild.id;
 
         if (!options.embed) {
-            return processToBank(guild ? guild.id : session, session, await channel.send('', {
+            return processToBank(guild, channel.id, await channel.send('', {
                 embed: {
-                    color: app.service('reply').replyColor.normal.cyan,
+                    color: replyService.replyColor.normal.cyan,
                     description: text,
                     timestamp: new Date(),
                     footer: {
@@ -92,14 +83,14 @@ export default (app) => {
                 }
             }));
         } else {
-            return processToBank(guild ? guild.id : session, session, await channel.send(text, options));
+            return processToBank(guild, channel.id, await channel.send(text, options));
         }
     };
 
     const sendInfoMessage = async (text, message) => {
         return await sendMessage('', message, {
             embed: {
-                color: app.service('reply').replyColor.normal.cyan,
+                color: replyService.replyColor.normal.cyan,
                 description: text,
                 timestamp: new Date(),
                 footer: {
@@ -113,7 +104,7 @@ export default (app) => {
     const sendSuccessMessage = async (text, message) => {
         return await sendMessage('', message, {
             embed: {
-                color: app.service('reply').replyColor.normal.green,
+                color: replyService.replyColor.normal.green,
                 description: text,
                 timestamp: new Date(),
                 footer: {
@@ -127,7 +118,7 @@ export default (app) => {
     const sendErrorMessage = async (text, message) => {
         return await sendMessage('', message, {
             embed: {
-                color: app.service('reply').replyColor.normal.amber,
+                color: replyService.replyColor.normal.amber,
                 description: text,
                 timestamp: new Date(),
                 footer: {
@@ -138,14 +129,14 @@ export default (app) => {
         });
     };
 
-    const processToBank = (id, session, message) => {
-        if (!msgBank[id])
-            msgBank[id] = [];
+    const processToBank = (guild, channel, message) => {
+        if (!msgBank[guild])
+            msgBank[guild] = [];
 
-        if (!msgBank[id][session])
-            msgBank[id][session] = [];
+        if (!msgBank[guild][channel])
+            msgBank[guild][channel] = [];
 
-        msgBank[id][session].push(message);
+        msgBank[guild][channel].push(message);
 
         return message;
     };
@@ -153,14 +144,14 @@ export default (app) => {
     const checkIfGroupable = async () => {
         if (!config.get('message.autoGroupMessages')) return;
 
-        for (const id in msgBank) {
-            for (const session in msgBank[id]) {
-                const msgs = msgBank[id][session];
+        for (const guild in msgBank) {
+            for (const channel in msgBank[guild]) {
+                const msgs = msgBank[guild][channel];
 
                 if (msgs.length > config.get('message.groupMessages')) {
                     let text = '';
 
-                    log(`Grouping messages from ${session}:${id}`);
+                    log(`Grouping messages from ${channel}:${guild}`);
 
                     if (!msgs[0]) throw new Error('Unable to group messages');
 
@@ -170,13 +161,13 @@ export default (app) => {
                         else
                             text += `**${msgs[i].author.username}**: ${msgs[i].content}\n`;
 
-                        if (id !== session)
+                        if (guild !== channel)
                             msgs[i].delete();
                     }
 
                     await sendMessage('', msgs[0], {
                         embed: {
-                            color: app.service('reply').replyColor.normal.purple,
+                            color: replyService.replyColor.normal.purple,
                             title: 'Conversation',
                             description: text,
                             timestamp: new Date(),
@@ -187,7 +178,7 @@ export default (app) => {
                         }
                     });
 
-                    msgBank[id][session] = [];
+                    msgBank[guild][channel] = [];
                 }
             }
         }
@@ -231,34 +222,6 @@ export default (app) => {
             };
 
             requestDialogFlow(message.author.id, text, dfCb);
-        },
-        handleSourcemod: (text, author, server) => {
-            const dfCb = async (response) => {
-                const dfValue = response.result.score;
-                const dfAction = response.result.action;
-
-                if (dfValue >= config.get('service.dialogflow.threshold')) {
-                    log(`Detected remote action ${dfAction}, DFValue: ${dfValue}`);
-
-                    app.callAction('sourcemod', dfAction, { server, author, response });
-                } else {
-                    log(`Unable to detect action remotely, falback to default action. DFValue: ${dfValue}`);
-
-                    if (dfValue < config.get('service.dialogflow.threshold')) {
-                        try {
-                            const reply = await app.service('cleverbot').getReply(author, text);
-
-                            app.callAction('sourcemod', 'chat', { reply, author, server });
-                        } catch (error) {
-                            app.callAction('sourcemod', 'default', { server });
-                        }
-                    } else {
-                        app.callAction('sourcemod', 'default', { server });
-                    }
-                }
-            };
-
-            requestDialogFlow(author, text, dfCb);
         },
         sendMessage,
         sendSuccessMessage,

@@ -179,7 +179,7 @@ export default async (app, voiceService, messageService) => {
         for (const item of items) {
             const videoID = item.snippet.resourceId.videoId;
 
-            await queue(guild, videoID, { noAnnouce: true, noCache: true });
+            await queue(guild, videoID, { noAnnouce: true, noCache: false });
         }
 
         if (!options.noAnnouce) {
